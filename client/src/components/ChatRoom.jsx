@@ -531,7 +531,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       {showUsers && (
         <div className="users-panel">
           <div className="users-panel-header">
-            <span>접속 중인 엘프</span>
+            <span>{getMode() === 'kotlc' ? '접속 중인 엘프' : '접속 중인 사용자'}</span>
             <button className="users-close-btn" onClick={() => setShowUsers(false)}>✕</button>
           </div>
           {isOwner && !roomName.startsWith('__claude__') && (
