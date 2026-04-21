@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+rooms-data.json
+rooms-data.json.tmp
+profiles.json
+profiles.json.tmp
+passwords.json

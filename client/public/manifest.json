@@ -1,0 +1,18 @@
+{
+  "name": "Imparter - 잃어버린 도시의 메신저",
+  "short_name": "Imparter",
+  "description": "잃어버린 도시의 수호자 테마 실시간 채팅 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0e27",
+  "theme_color": "#0a0e27",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
