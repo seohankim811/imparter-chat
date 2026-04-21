@@ -210,6 +210,16 @@ export default function Message({ message, isOwn, onReply, onReact, onEdit, onDe
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             )}
+            {message.video && (
+              <video
+                src={message.video}
+                className="message-image"
+                controls
+                preload="metadata"
+                onClick={(e) => e.stopPropagation()}
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            )}
             {message.text && <p style={{ whiteSpace: 'pre-wrap' }}>{formatText(message.text, searchQuery)}</p>}
             {message.edited && <span className="edited-mark">(수정됨)</span>}
 

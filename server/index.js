@@ -1074,10 +1074,11 @@ function loadRooms() {
     if (fs.existsSync(DATA_FILE)) {
       const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
       for (const [name, room] of Object.entries(data)) {
-        // 저장된 이미지 플레이스홀더는 null로 복원
+        // 저장된 이미지/비디오 플레이스홀더는 null로 복원
         const messages = (room.messages || []).map(m => ({
           ...m,
-          image: m.image === '__image__' ? null : m.image
+          image: m.image === '__image__' ? null : m.image,
+          video: m.video === '__video__' ? null : m.video
         }));
         rooms.set(name, {
           users: new Set(),
@@ -1107,10 +1108,11 @@ async function doSave() {
   try {
     const data = {};
     for (const [name, room] of rooms) {
-      // 이미지는 저장하지 않음 (용량 폭증 방지) - 세션 동안만 유지
+      // 이미지/비디오는 저장하지 않음 (용량 폭증 방지) - 세션 동안만 유지
       const persistableMessages = room.messages.map(m => ({
         ...m,
-        image: m.image ? '__image__' : null
+        image: m.image ? '__image__' : null,
+        video: m.video ? '__video__' : null
       }));
       data[name] = {
         messages: persistableMessages,
@@ -1268,6 +1270,45 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('delete-room', ({ roomName, mode }) => {
+    const user = users.get(socket.id);
+    if (!user) return;
+    const actualMode = mode || socket.data.mode || 'canva';
+    const fullName = fullRoomKey(actualMode, roomName);
+    const room = rooms.get(fullName);
+    if (!room) return;
+
+    // 방장만 삭제 가능
+    if (room.ownerNickname !== user.nickname) {
+      socket.emit('room-delete-error', { message: '방장만 방을 삭제할 수 있어요!' });
+      return;
+    }
+
+    // 방 안의 모든 사용자를 내보내고 삭제 알림
+    io.to(fullName).emit('room-deleted', { roomName });
+
+    // 소켓 방에서 모두 내보내기
+    const roomSockets = io.sockets.adapter.rooms.get(fullName);
+    if (roomSockets) {
+      for (const sid of roomSockets) {
+        const s = io.sockets.sockets.get(sid);
+        if (s) s.leave(fullName);
+      }
+    }
+
+    // 방 데이터 삭제
+    rooms.delete(fullName);
+    roomPasswords.delete(fullName);
+    activePolls.delete(fullName);
+    activeGames.delete(fullName);
+    claudeHistories.delete(fullName);
+    saveRooms();
+    savePasswords();
+
+    // 모두에게 방 목록 업데이트 알림
+    io.emit('room-list-updated');
+  });
+
   socket.on('kick-user', ({ roomName, targetId, mode }) => {
     const actualMode = mode || socket.data.mode || 'canva';
     const fullName = fullRoomKey(actualMode, roomName);
@@ -1290,13 +1331,13 @@ io.on('connection', (socket) => {
     io.to(fullName).emit('room-users', Array.from(room.users).map(id => users.get(id)).filter(Boolean));
   });
 
-  socket.on('send-message', ({ roomName, text, replyTo, image, sticker, mode }) => {
+  socket.on('send-message', ({ roomName, text, replyTo, image, sticker, video, mode }) => {
     const user = users.get(socket.id);
     if (!user) return;
     const actualMode = mode || socket.data.mode || 'canva';
     const fullName = fullRoomKey(actualMode, roomName);
     let trimmedText = typeof text === 'string' ? text.trim() : '';
-    if (!trimmedText && !image && !sticker) return;
+    if (!trimmedText && !image && !sticker && !video) return;
 
     // 욕설 필터 적용 (봇 명령어 제외)
     let censorWarning = false;
@@ -1313,6 +1354,7 @@ io.on('connection', (socket) => {
       icon: user.icon,
       text: trimmedText,
       image: image || null,
+      video: video || null,
       sticker: sticker || null,
       timestamp: Date.now(),
       replyTo: replyTo || null,
@@ -1324,7 +1366,7 @@ io.on('connection', (socket) => {
     const room = rooms.get(fullName);
     if (room) {
       room.messages.push(message);
-      room.lastMessage = image ? '📷 사진' : sticker ? `${sticker} (스티커)` : trimmedText;
+      room.lastMessage = image ? '📷 사진' : video ? '🎥 비디오' : sticker ? `${sticker} (스티커)` : trimmedText;
       if (room.messages.length > 500) room.messages.shift();
       saveRooms();
     }

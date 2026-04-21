@@ -248,6 +248,17 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       }
     });
 
+    socket.on('room-deleted', ({ roomName: deletedRoom }) => {
+      if (deletedRoom === roomName) {
+        alert('🗑️ 방이 삭제되었습니다.');
+        onLeave();
+      }
+    });
+
+    socket.on('room-delete-error', ({ message }) => {
+      alert(`❌ ${message}`);
+    });
+
     socket.on('user-typing', ({ nickname, isTyping }) => {
       setTypingUsers(prev => {
         if (isTyping) {
@@ -278,6 +289,8 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       socket.off('room-users');
       socket.off('room-owner');
       socket.off('kicked');
+      socket.off('room-deleted');
+      socket.off('room-delete-error');
       socket.off('user-typing');
       socket.off('message-reaction');
     };
@@ -310,18 +323,21 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
 
     if (!input.trim() && !imagePreview) return;
 
-    const replyText = replyingTo?.text || (replyingTo?.image ? '📷 사진' : '');
+    const replyText = replyingTo?.text || (replyingTo?.image ? '📷 사진' : replyingTo?.video ? '🎥 비디오' : '');
     const replyData = replyingTo ? {
       id: replyingTo.id,
       nickname: replyingTo.nickname,
       text: replyText.length > 50 ? replyText.slice(0, 50) + '...' : replyText
     } : null;
 
+    // 비디오/이미지 구분해서 전송
+    const isVideo = imagePreview?.type === 'video';
     socket.emit('send-message', {
       roomName,
       text: input.trim(),
       replyTo: replyData,
-      image: imagePreview,
+      image: isVideo ? null : (imagePreview?.data || imagePreview),
+      video: isVideo ? imagePreview.data : null,
       mode: getMode()
     });
     socket.emit('typing', { roomName, isTyping: false });
@@ -334,13 +350,34 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   const handleImageSelect = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // 비디오인 경우
+    if (file.type.startsWith('video/')) {
+      // 비디오 크기 제한 (10MB - Socket.io 버퍼 한도)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('비디오는 10MB 이하만 전송할 수 있어요!\n더 짧게 촬영해주세요.');
+        e.target.value = '';
+        return;
+      }
+      // base64로 변환
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setImagePreview({ type: 'video', data: ev.target.result });
+      };
+      reader.onerror = () => alert('비디오 처리 실패');
+      reader.readAsDataURL(file);
+      e.target.value = '';
+      return;
+    }
+
+    // 이미지인 경우
     if (!file.type.startsWith('image/')) {
-      alert('이미지 파일만 선택할 수 있습니다');
+      alert('이미지나 비디오 파일만 선택할 수 있어요');
       return;
     }
     try {
       const resized = await resizeImage(file);
-      setImagePreview(resized);
+      setImagePreview({ type: 'image', data: resized });
     } catch (err) {
       alert('이미지 처리 실패');
     }
@@ -394,6 +431,14 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
 
   const handleReact = (messageId, emoji) => {
     socket.emit('react-message', { roomName, messageId, emoji, mode: getMode() });
+  };
+
+  const handleDeleteRoom = () => {
+    if (confirm(`⚠️ "${roomName}" 방을 정말 삭제하시겠습니까?\n\n모든 메시지가 사라지고 되돌릴 수 없어요!`)) {
+      if (confirm(`정말 확실해요?\n\n방에 있는 모든 사람이 쫓겨납니다.`)) {
+        socket.emit('delete-room', { roomName, mode: getMode() });
+      }
+    }
   };
 
   const toggleSound = () => {
@@ -461,6 +506,15 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
             <span>접속 중인 엘프</span>
             <button className="users-close-btn" onClick={() => setShowUsers(false)}>✕</button>
           </div>
+          {isOwner && !roomName.startsWith('__claude__') && (
+            <div className="user-item">
+              <span className="user-item-icon">🗑️</span>
+              <span className="user-item-name" style={{ color: '#ff6666' }}>방 삭제</span>
+              <button className="kick-btn" onClick={handleDeleteRoom} style={{ background: '#b33333' }}>
+                삭제
+              </button>
+            </div>
+          )}
           {roomUsers.map((u) => (
             <div key={u.id} className="user-item">
               <span className="user-item-icon">{u.icon?.emoji || '✨'}</span>
@@ -630,7 +684,11 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
 
       {imagePreview && (
         <div className="image-preview-bar">
-          <img src={imagePreview} alt="미리보기" />
+          {imagePreview.type === 'video' ? (
+            <video src={imagePreview.data} style={{ maxHeight: 80, maxWidth: 120, borderRadius: 10 }} controls />
+          ) : (
+            <img src={imagePreview.data || imagePreview} alt="미리보기" />
+          )}
           <button className="image-preview-close" onClick={() => setImagePreview(null)}>✕</button>
         </div>
       )}
@@ -664,14 +722,14 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
           type="button"
           className="image-btn"
           onClick={() => fileInputRef.current?.click()}
-          title="사진 보내기"
+          title="사진/비디오 보내기"
         >
           📷
         </button>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           onChange={handleImageSelect}
           style={{ display: 'none' }}
         />
