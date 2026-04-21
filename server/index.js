@@ -1074,11 +1074,12 @@ function loadRooms() {
     if (fs.existsSync(DATA_FILE)) {
       const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
       for (const [name, room] of Object.entries(data)) {
-        // 저장된 이미지/비디오 플레이스홀더는 null로 복원
+        // 저장된 이미지/비디오/음성 플레이스홀더는 null로 복원
         const messages = (room.messages || []).map(m => ({
           ...m,
           image: m.image === '__image__' ? null : m.image,
-          video: m.video === '__video__' ? null : m.video
+          video: m.video === '__video__' ? null : m.video,
+          audio: m.audio === '__audio__' ? null : m.audio
         }));
         rooms.set(name, {
           users: new Set(),
@@ -1108,11 +1109,12 @@ async function doSave() {
   try {
     const data = {};
     for (const [name, room] of rooms) {
-      // 이미지/비디오는 저장하지 않음 (용량 폭증 방지) - 세션 동안만 유지
+      // 이미지/비디오/음성은 저장하지 않음 (용량 폭증 방지) - 세션 동안만 유지
       const persistableMessages = room.messages.map(m => ({
         ...m,
         image: m.image ? '__image__' : null,
-        video: m.video ? '__video__' : null
+        video: m.video ? '__video__' : null,
+        audio: m.audio ? '__audio__' : null
       }));
       data[name] = {
         messages: persistableMessages,
@@ -1184,7 +1186,8 @@ io.on('connection', (socket) => {
         name,
         userCount: room.users.size,
         lastMessage: room.lastMessage || '',
-        hasPassword: roomPasswords.has(fullName)
+        hasPassword: roomPasswords.has(fullName),
+        lastMessageTime: room.messages.length > 0 ? room.messages[room.messages.length - 1].timestamp : 0
       });
     }
     socket.emit('room-list', roomList);
@@ -1331,13 +1334,13 @@ io.on('connection', (socket) => {
     io.to(fullName).emit('room-users', Array.from(room.users).map(id => users.get(id)).filter(Boolean));
   });
 
-  socket.on('send-message', ({ roomName, text, replyTo, image, sticker, video, mode }) => {
+  socket.on('send-message', ({ roomName, text, replyTo, image, sticker, video, audio, audioDuration, mode }) => {
     const user = users.get(socket.id);
     if (!user) return;
     const actualMode = mode || socket.data.mode || 'canva';
     const fullName = fullRoomKey(actualMode, roomName);
     let trimmedText = typeof text === 'string' ? text.trim() : '';
-    if (!trimmedText && !image && !sticker && !video) return;
+    if (!trimmedText && !image && !sticker && !video && !audio) return;
 
     // 욕설 필터 적용 (봇 명령어 제외)
     let censorWarning = false;
@@ -1355,6 +1358,8 @@ io.on('connection', (socket) => {
       text: trimmedText,
       image: image || null,
       video: video || null,
+      audio: audio || null,
+      audioDuration: audioDuration || 0,
       sticker: sticker || null,
       timestamp: Date.now(),
       replyTo: replyTo || null,
@@ -1366,7 +1371,7 @@ io.on('connection', (socket) => {
     const room = rooms.get(fullName);
     if (room) {
       room.messages.push(message);
-      room.lastMessage = image ? '📷 사진' : video ? '🎥 비디오' : sticker ? `${sticker} (스티커)` : trimmedText;
+      room.lastMessage = image ? '📷 사진' : video ? '🎥 비디오' : audio ? '🎤 음성' : sticker ? `${sticker} (스티커)` : trimmedText;
       if (room.messages.length > 500) room.messages.shift();
       saveRooms();
     }

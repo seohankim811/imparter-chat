@@ -220,6 +220,14 @@ export default function Message({ message, isOwn, onReply, onReact, onEdit, onDe
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             )}
+            {message.audio && (
+              <div className="voice-message" onClick={(e) => e.stopPropagation()}>
+                <audio src={message.audio} controls preload="metadata" style={{ width: '100%', minWidth: 200 }} />
+                {message.audioDuration > 0 && (
+                  <span className="voice-duration">🎤 {Math.floor(message.audioDuration / 60)}:{(message.audioDuration % 60).toString().padStart(2, '0')}</span>
+                )}
+              </div>
+            )}
             {message.text && <p style={{ whiteSpace: 'pre-wrap' }}>{formatText(message.text, searchQuery)}</p>}
             {message.edited && <span className="edited-mark">(수정됨)</span>}
 

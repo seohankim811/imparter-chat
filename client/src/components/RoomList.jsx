@@ -141,22 +141,30 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
           </div>
         )}
 
-        {rooms.filter(r => !r.name.startsWith('__claude__')).map((room) => (
+        {rooms.filter(r => !r.name.startsWith('__claude__')).map((room) => {
+          const lastSeenKey = `imparter-lastseen-${getMode()}-${room.name}`;
+          const lastSeen = parseInt(localStorage.getItem(lastSeenKey) || '0');
+          const hasUnread = room.lastMessageTime && room.lastMessageTime > lastSeen;
+          return (
           <button
             key={room.name}
-            className="room-item"
+            className={`room-item ${hasUnread ? 'has-unread' : ''}`}
             onClick={() => handleJoinProtectedRoom(room.name)}
           >
             <div className="room-icon">{room.hasPassword ? '🔒' : '✨'}</div>
             <div className="room-info">
-              <span className="room-name">{room.name}</span>
+              <span className="room-name">
+                {room.name}
+                {hasUnread && <span className="unread-dot">●</span>}
+              </span>
               <span className="room-last-msg">{room.lastMessage || '아직 메시지가 없습니다'}</span>
             </div>
             <div className="room-meta">
               <span className="room-users">{room.userCount}명</span>
             </div>
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {showCreate ? (

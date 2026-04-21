@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import socket from '../socket';
 import { getMode } from '../mode';
+import VoiceRecorder from './VoiceRecorder';
+import PartyEffect, { hasPartyTrigger } from './PartyEffect';
 import Message from './Message';
 
 // 큰 스티커 (카톡 이모티콘처럼)
@@ -172,6 +174,8 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   const [imagePreview, setImagePreview] = useState(null);
   const [showStickers, setShowStickers] = useState(false);
   const [showCommands, setShowCommands] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [partyTrigger, setPartyTrigger] = useState(0);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -185,7 +189,15 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   useEffect(() => {
     window.__currentRoom = roomName;
     window.__currentMode = getMode();
-    return () => { window.__currentRoom = null; window.__currentMode = null; };
+    // 방 들어올 때 lastSeen 업데이트
+    const lastSeenKey = `imparter-lastseen-${getMode()}-${roomName}`;
+    localStorage.setItem(lastSeenKey, Date.now().toString());
+    return () => {
+      window.__currentRoom = null;
+      window.__currentMode = null;
+      // 나갈 때도 업데이트
+      localStorage.setItem(lastSeenKey, Date.now().toString());
+    };
   }, [roomName]);
 
   useEffect(() => {
@@ -220,6 +232,10 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       });
       if (!isFirstLoad.current && msg.nickname !== user.nickname && soundOnRef.current && document.visibilityState === 'visible') {
         playNotificationSound();
+      }
+      // 🎉 파티 효과 트리거!
+      if (!isFirstLoad.current && hasPartyTrigger(msg.text)) {
+        setPartyTrigger(t => t + 1);
       }
     });
 
@@ -434,6 +450,16 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
     socket.emit('react-message', { roomName, messageId, emoji, mode: getMode() });
   };
 
+  const handleVoiceSend = (audioData, duration) => {
+    setShowVoiceRecorder(false);
+    socket.emit('send-message', {
+      roomName,
+      audio: audioData,
+      audioDuration: duration,
+      mode: getMode()
+    });
+  };
+
   const handleDeleteRoom = () => {
     if (confirm(`⚠️ "${roomName}" 방을 정말 삭제하시겠습니까?\n\n모든 메시지가 사라지고 되돌릴 수 없어요!`)) {
       if (confirm(`정말 확실해요?\n\n방에 있는 모든 사람이 쫓겨납니다.`)) {
@@ -459,6 +485,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
 
   return (
     <div className="chatroom-container">
+      <PartyEffect trigger={partyTrigger} />
       <div className="stars-bg" />
 
       <div className="chatroom-header">
@@ -694,6 +721,13 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
         </div>
       )}
 
+      {showVoiceRecorder && (
+        <VoiceRecorder
+          onSend={handleVoiceSend}
+          onCancel={() => setShowVoiceRecorder(false)}
+        />
+      )}
+
       <form className="message-input-area" onSubmit={handleSend}>
         <button
           type="button"
@@ -734,6 +768,14 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
           title="비디오 촬영/전송"
         >
           🎥
+        </button>
+        <button
+          type="button"
+          className="image-btn"
+          onClick={() => setShowVoiceRecorder(true)}
+          title="음성 메시지"
+        >
+          🎤
         </button>
         <input
           ref={fileInputRef}
