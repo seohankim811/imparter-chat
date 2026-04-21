@@ -370,6 +370,52 @@ function handleBotCommand(text, user) {
 
 loadProfiles();
 
+// ===== 욕설 필터 =====
+const BAD_WORDS = [
+  // 한국어 욕설
+  '씨발', '시발', 'ㅅㅂ', 'ㅆㅂ', '시팔', '씨팔', '쉬발', '쉽알', '싀발',
+  '개새끼', '개색기', '개색끼', '개세끼', 'ㄱㅅㄲ',
+  '병신', 'ㅂㅅ', '븅신', '뷰신',
+  '미친', '미쳤', 'ㅁㅊ', 'ㅁ친',
+  '좆', '좇', '존나', '졸라', '존내', 'ㅈㄴ',
+  '새끼', '새기', '색기', '색끼', 'ㅅㄲ',
+  '지랄', 'ㅈㄹ',
+  '닥쳐', '꺼져', '뒤져', '디져',
+  '엿먹', '좆까', '좆나',
+  '년아', '놈아',
+  '후레자식', '쌍놈', '쌍년',
+  '느금마', '니애미', '니어미', '니엄마', '애미', '에미',
+  '창녀', '걸레',
+  '발정', '자위', '섹스', '섹쉬',
+  '보지', '자지', '빠구리',
+  '호구', '등신',
+  // 영어 욕설
+  'fuck', 'fck', 'fvck', 'f*ck', 'shit', 'sht', 'sh*t',
+  'bitch', 'btch', 'b*tch', 'asshole', 'bastard',
+  'damn', 'dick', 'pussy', 'cunt', 'whore',
+  'retard', 'nigger', 'nigga',
+];
+
+function censorBadWords(text) {
+  if (!text || typeof text !== 'string') return text;
+  let censored = text;
+  let foundBad = false;
+  const lower = text.toLowerCase();
+
+  for (const word of BAD_WORDS) {
+    const wordLower = word.toLowerCase();
+    if (lower.includes(wordLower)) {
+      foundBad = true;
+      // 대소문자 무시하고 전역 치환 - 정규식 특수문자 이스케이프
+      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(escaped, 'gi');
+      censored = censored.replace(re, (match) => '*'.repeat(match.length));
+    }
+  }
+
+  return { text: censored, hadBadWord: foundBad };
+}
+
 // ===== 자체 AI 챗봇 (API 없이 작동) =====
 
 // 랜덤 선택 헬퍼
@@ -1249,8 +1295,16 @@ io.on('connection', (socket) => {
     if (!user) return;
     const actualMode = mode || socket.data.mode || 'canva';
     const fullName = fullRoomKey(actualMode, roomName);
-    const trimmedText = typeof text === 'string' ? text.trim() : '';
+    let trimmedText = typeof text === 'string' ? text.trim() : '';
     if (!trimmedText && !image && !sticker) return;
+
+    // 욕설 필터 적용 (봇 명령어 제외)
+    let censorWarning = false;
+    if (trimmedText && !trimmedText.startsWith('/')) {
+      const filtered = censorBadWords(trimmedText);
+      trimmedText = filtered.text;
+      censorWarning = filtered.hadBadWord;
+    }
 
     const message = {
       id: `${Date.now()}-${socket.id}-${Math.random().toString(36).slice(2, 8)}`,
@@ -1276,6 +1330,16 @@ io.on('connection', (socket) => {
     }
 
     io.to(fullName).emit('new-message', message);
+
+    // 욕설 감지 시 경고 메시지
+    if (censorWarning) {
+      setTimeout(() => {
+        io.to(fullName).emit('system-message', {
+          text: `⚠️ ${user.nickname}님, 욕설은 자동으로 가려집니다. 예쁜 말 써주세요!`,
+          timestamp: Date.now()
+        });
+      }, 100);
+    }
 
     // XP 시스템 & 배지 체크
     if (!trimmedText.startsWith('/')) {
