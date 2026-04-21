@@ -175,6 +175,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
   const isFirstLoad = useRef(true);
 
   const scrollToBottom = () => {
@@ -722,14 +723,31 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
           type="button"
           className="image-btn"
           onClick={() => fileInputRef.current?.click()}
-          title="사진/비디오 보내기"
+          title="사진 보내기"
         >
           📷
+        </button>
+        <button
+          type="button"
+          className="image-btn"
+          onClick={() => videoInputRef.current?.click()}
+          title="비디오 촬영/전송"
+        >
+          🎥
         </button>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,video/*"
+          accept="image/*"
+          capture="environment"
+          onChange={handleImageSelect}
+          style={{ display: 'none' }}
+        />
+        <input
+          ref={videoInputRef}
+          type="file"
+          accept="video/*"
+          capture="environment"
           onChange={handleImageSelect}
           style={{ display: 'none' }}
         />
