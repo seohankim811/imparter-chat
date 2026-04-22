@@ -33,7 +33,7 @@ export default function VideoRecorder({ onSend, onCancel }) {
   const initCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 360 } },
         audio: true
       });
       streamRef.current = stream;
@@ -49,16 +49,19 @@ export default function VideoRecorder({ onSend, onCancel }) {
   const startRecording = () => {
     if (!streamRef.current) return;
     try {
-      // 가능한 mimeType 찾기
+      // 사파리는 mp4만 지원, 크롬은 webm 선호. mp4 먼저 시도.
       const types = [
-        'video/webm;codecs=vp9,opus',
+        'video/mp4;codecs=h264,aac',
+        'video/mp4',
         'video/webm;codecs=vp8,opus',
-        'video/webm',
-        'video/mp4'
+        'video/webm'
       ];
       const mimeType = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
 
-      const mr = new MediaRecorder(streamRef.current, mimeType ? { mimeType } : undefined);
+      const mr = new MediaRecorder(streamRef.current, {
+        ...(mimeType ? { mimeType } : {}),
+        videoBitsPerSecond: 500000 // 500kbps — 용량 제한
+      });
       mediaRecorderRef.current = mr;
       chunksRef.current = [];
 
@@ -104,14 +107,19 @@ export default function VideoRecorder({ onSend, onCancel }) {
 
   const handleSend = () => {
     if (!previewBlob) return;
-    if (previewBlob.size > 10 * 1024 * 1024) {
-      alert('비디오가 너무 커요! (10MB 이하만 가능)\n더 짧게 찍어주세요.');
+    const mb = (previewBlob.size / 1024 / 1024).toFixed(1);
+    if (previewBlob.size > 45 * 1024 * 1024) {
+      alert(`비디오가 너무 커요! (${mb}MB)\n45MB 이하만 가능해요. 더 짧게 찍어주세요.`);
       return;
     }
+    console.log('Sending video:', mb, 'MB');
     const reader = new FileReader();
     reader.onload = () => {
       onSend(reader.result);
       cleanup();
+    };
+    reader.onerror = () => {
+      alert('비디오 읽기 실패! 다시 시도해주세요.');
     };
     reader.readAsDataURL(previewBlob);
   };

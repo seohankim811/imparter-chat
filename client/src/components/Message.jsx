@@ -216,8 +216,19 @@ export default function Message({ message, isOwn, onReply, onReact, onEdit, onDe
                 className="message-image"
                 controls
                 preload="metadata"
+                playsInline
                 onClick={(e) => e.stopPropagation()}
-                onError={(e) => { e.target.style.display = 'none'; }}
+                onError={(e) => {
+                  const parent = e.target.parentNode;
+                  if (parent && !parent.querySelector('.video-fallback')) {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'video-fallback';
+                    fallback.style.cssText = 'padding:12px;color:#888;font-size:13px;';
+                    fallback.innerHTML = '🎥 비디오 (재생 불가)<br/><a href="' + message.video + '" download="video.webm" style="color:#4a9eff;">다운로드</a>';
+                    parent.appendChild(fallback);
+                  }
+                  e.target.style.display = 'none';
+                }}
               />
             )}
             {message.audio && (

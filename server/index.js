@@ -39,7 +39,7 @@ app.use(express.static(join(__dirname, '../client/dist')));
 const server = createServer(app);
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
-  maxHttpBufferSize: 10 * 1024 * 1024
+  maxHttpBufferSize: 50 * 1024 * 1024
 });
 
 const DATA_FILE = join(__dirname, 'rooms-data.json');
