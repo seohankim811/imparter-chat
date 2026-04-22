@@ -3010,3 +3010,107 @@ body {
 [data-mode="canva"] .voice-duration {
   color: #6b7280;
 }
+
+/* ===== 비디오 녹화 오버레이 ===== */
+.video-recorder-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.video-recorder-box {
+  background: rgba(20, 25, 50, 0.95);
+  border: 1px solid rgba(150, 180, 255, 0.3);
+  border-radius: 20px;
+  padding: 20px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+}
+
+.video-recorder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.video-rec-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ff6b6b;
+  font-size: 13px;
+}
+
+.video-recorder-preview {
+  width: 100%;
+  max-width: 500px;
+  max-height: 60vh;
+  border-radius: 12px;
+  background: #000;
+  object-fit: cover;
+}
+
+.video-recorder-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.video-record-btn,
+.video-stop-btn {
+  padding: 12px 28px;
+  border-radius: 30px;
+  border: none;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.video-record-btn {
+  background: linear-gradient(135deg, #ff4d4d, #ff2020);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 77, 77, 0.4);
+}
+
+.video-record-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 77, 77, 0.6);
+}
+
+.video-stop-btn {
+  background: linear-gradient(135deg, #4a5568, #2d3748);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(74, 85, 104, 0.4);
+}
+
+/* 라이트 모드 */
+[data-mode="canva"] .video-recorder-box {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(100, 130, 200, 0.3);
+}
+
+[data-mode="canva"] .video-recorder-header {
+  color: #1d1d1f;
+}
+
+[data-mode="canva"] .video-recorder-preview {
+  background: #1d1d1f;
+}

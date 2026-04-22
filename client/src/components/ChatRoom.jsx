@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import socket from '../socket';
 import { getMode } from '../mode';
 import VoiceRecorder from './VoiceRecorder';
+import VideoRecorder from './VideoRecorder';
 import PartyEffect, { hasPartyTrigger } from './PartyEffect';
 import Message from './Message';
 
@@ -175,6 +176,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   const [showStickers, setShowStickers] = useState(false);
   const [showCommands, setShowCommands] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [partyTrigger, setPartyTrigger] = useState(0);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
@@ -460,6 +462,15 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
     });
   };
 
+  const handleVideoSend = (videoData) => {
+    setShowVideoRecorder(false);
+    socket.emit('send-message', {
+      roomName,
+      video: videoData,
+      mode: getMode()
+    });
+  };
+
   const handleDeleteRoom = () => {
     if (confirm(`⚠️ "${roomName}" 방을 정말 삭제하시겠습니까?\n\n모든 메시지가 사라지고 되돌릴 수 없어요!`)) {
       if (confirm(`정말 확실해요?\n\n방에 있는 모든 사람이 쫓겨납니다.`)) {
@@ -728,6 +739,13 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
         />
       )}
 
+      {showVideoRecorder && (
+        <VideoRecorder
+          onSend={handleVideoSend}
+          onCancel={() => setShowVideoRecorder(false)}
+        />
+      )}
+
       <form className="message-input-area" onSubmit={handleSend}>
         <button
           type="button"
@@ -764,7 +782,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
         <button
           type="button"
           className="image-btn"
-          onClick={() => videoInputRef.current?.click()}
+          onClick={() => setShowVideoRecorder(true)}
           title="비디오 촬영/전송"
         >
           🎥
