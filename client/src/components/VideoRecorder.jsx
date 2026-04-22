@@ -6,6 +6,7 @@ export default function VideoRecorder({ onSend, onCancel }) {
   const [previewBlob, setPreviewBlob] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -33,7 +34,7 @@ export default function VideoRecorder({ onSend, onCancel }) {
   const initCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 540 } },
         audio: true
       });
       streamRef.current = stream;
@@ -60,7 +61,7 @@ export default function VideoRecorder({ onSend, onCancel }) {
 
       const mr = new MediaRecorder(streamRef.current, {
         ...(mimeType ? { mimeType } : {}),
-        videoBitsPerSecond: 2500000 // 2.5Mbps — HD 품질
+        videoBitsPerSecond: 1200000 // 1.2Mbps — 선명하면서 빠름
       });
       mediaRecorderRef.current = mr;
       chunksRef.current = [];
@@ -80,10 +81,10 @@ export default function VideoRecorder({ onSend, onCancel }) {
       setDuration(0);
       timerRef.current = setInterval(() => {
         setDuration(d => {
-          // 자동 중지: 30초
-          if (d >= 30) {
+          // 자동 중지: 15초
+          if (d >= 15) {
             stopRecording();
-            return 30;
+            return 15;
           }
           return d + 1;
         });
@@ -112,13 +113,14 @@ export default function VideoRecorder({ onSend, onCancel }) {
       alert(`비디오가 너무 커요! (${mb}MB)\n45MB 이하만 가능해요. 더 짧게 찍어주세요.`);
       return;
     }
-    console.log('Sending video:', mb, 'MB');
+    setUploading(true);
     const reader = new FileReader();
     reader.onload = () => {
       onSend(reader.result);
       cleanup();
     };
     reader.onerror = () => {
+      setUploading(false);
       alert('비디오 읽기 실패! 다시 시도해주세요.');
     };
     reader.readAsDataURL(previewBlob);
@@ -155,7 +157,8 @@ export default function VideoRecorder({ onSend, onCancel }) {
       <div className="video-recorder-box">
         <div className="video-recorder-header">
           🎥 비디오 녹화
-          {isRecording && <span className="video-rec-indicator"><span className="voice-rec-dot"></span>{formatTime(duration)} / 0:30</span>}
+          {isRecording && <span className="video-rec-indicator"><span className="voice-rec-dot"></span>{formatTime(duration)} / 0:15</span>}
+          {previewBlob && !uploading && <span className="video-rec-indicator" style={{ color: '#4ade80' }}>📦 {(previewBlob.size / 1024 / 1024).toFixed(1)}MB</span>}
         </div>
 
         {!previewUrl ? (
@@ -193,11 +196,11 @@ export default function VideoRecorder({ onSend, onCancel }) {
             </>
           ) : (
             <>
-              <button type="button" className="voice-cancel-btn" onClick={handleRetake}>
+              <button type="button" className="voice-cancel-btn" onClick={handleRetake} disabled={uploading}>
                 🔄 다시 찍기
               </button>
-              <button type="button" className="voice-send-btn" onClick={handleSend}>
-                ✈️ 전송
+              <button type="button" className="voice-send-btn" onClick={handleSend} disabled={uploading}>
+                {uploading ? '⏳ 전송 중...' : '✈️ 전송'}
               </button>
             </>
           )}
