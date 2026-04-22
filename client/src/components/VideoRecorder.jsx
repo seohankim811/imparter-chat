@@ -33,7 +33,7 @@ export default function VideoRecorder({ onSend, onCancel }) {
   const initCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 360 } },
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: true
       });
       streamRef.current = stream;
@@ -60,7 +60,7 @@ export default function VideoRecorder({ onSend, onCancel }) {
 
       const mr = new MediaRecorder(streamRef.current, {
         ...(mimeType ? { mimeType } : {}),
-        videoBitsPerSecond: 500000 // 500kbps — 용량 제한
+        videoBitsPerSecond: 2500000 // 2.5Mbps — HD 품질
       });
       mediaRecorderRef.current = mr;
       chunksRef.current = [];
