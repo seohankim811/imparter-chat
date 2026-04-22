@@ -108,16 +108,37 @@ function playNotificationSound() {
     const ctx = getAudioContext();
     if (!ctx) return;
     if (ctx.state === 'suspended') ctx.resume();
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
-    oscillator.frequency.setValueAtTime(800, ctx.currentTime);
-    oscillator.frequency.setValueAtTime(1000, ctx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-    oscillator.start(ctx.currentTime);
-    oscillator.stop(ctx.currentTime + 0.25);
+
+    // 카카오톡 스타일 3톤 알림
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.connect(ctx.destination);
+    master.gain.setValueAtTime(0.7, now); // 훨씬 큰 볼륨
+
+    const tones = [
+      { freq: 880, start: 0,    dur: 0.12 }, // A5
+      { freq: 1318, start: 0.1, dur: 0.15 }, // E6
+      { freq: 1760, start: 0.22, dur: 0.25 }, // A6
+    ];
+
+    tones.forEach(({ freq, start, dur }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + start);
+      gain.gain.setValueAtTime(0, now + start);
+      gain.gain.linearRampToValueAtTime(0.8, now + start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(now + start);
+      osc.stop(now + start + dur + 0.05);
+    });
+
+    // 진동! (핸드폰에서만 작동)
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 200]); // 딩-딩-디잉
+    }
   } catch (e) {}
 }
 
