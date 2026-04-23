@@ -35,7 +35,13 @@ export default function VideoRecorder({ onSend, onCancel }) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 540 } },
-        audio: true
+        audio: {
+          echoCancellation: false,    // 마이크 입력 안 줄임
+          noiseSuppression: false,    // 노이즈 억제 끔 (소리 작아짐 방지)
+          autoGainControl: false,     // 자동 음량 조절 끔
+          channelCount: 2,            // 스테레오
+          sampleRate: 48000           // 고품질
+        }
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -61,7 +67,8 @@ export default function VideoRecorder({ onSend, onCancel }) {
 
       const mr = new MediaRecorder(streamRef.current, {
         ...(mimeType ? { mimeType } : {}),
-        videoBitsPerSecond: 1200000 // 1.2Mbps — 선명하면서 빠름
+        videoBitsPerSecond: 1200000, // 1.2Mbps 비디오
+        audioBitsPerSecond: 192000   // 192kbps 오디오 (음악 품질)
       });
       mediaRecorderRef.current = mr;
       chunksRef.current = [];

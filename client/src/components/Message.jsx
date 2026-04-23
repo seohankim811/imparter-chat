@@ -217,6 +217,7 @@ export default function Message({ message, isOwn, onReply, onReact, onEdit, onDe
                 controls
                 preload="metadata"
                 playsInline
+                onLoadedMetadata={(e) => { e.target.volume = 1.0; }}
                 onClick={(e) => e.stopPropagation()}
                 onError={(e) => {
                   const parent = e.target.parentNode;
