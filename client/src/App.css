@@ -1666,6 +1666,20 @@ body {
   border-color: rgba(150, 180, 255, 0.3);
 }
 
+/* ===== 잠긴 버튼 (배지/레벨 미달) ===== */
+.locked-btn {
+  opacity: 0.45;
+  filter: grayscale(0.8);
+  background: rgba(20, 25, 50, 0.5) !important;
+  border-color: rgba(120, 130, 160, 0.15) !important;
+  box-shadow: none !important;
+  cursor: help;
+}
+.locked-btn:hover {
+  opacity: 0.7;
+  filter: grayscale(0.4);
+}
+
 .image-preview-bar {
   position: relative;
   z-index: 1;

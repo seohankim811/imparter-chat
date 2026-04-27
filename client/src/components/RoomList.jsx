@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import socket from '../socket';
 import { getCurrentModeConfig, getMode } from '../mode';
+import { isUnlocked, getLockMessage } from '../unlocks';
 
 export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpenProfile, theme, toggleTheme }) {
   const modeConfig = getCurrentModeConfig();
@@ -8,6 +9,7 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
   const [rooms, setRooms] = useState([]);
   const [newRoomName, setNewRoomName] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [myProfile, setMyProfile] = useState(null);
   const onJoinRoomRef = useRef(onJoinRoom);
 
   useEffect(() => { onJoinRoomRef.current = onJoinRoom; }, [onJoinRoom]);
@@ -17,6 +19,7 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
     // 현재 모드를 서버에 먼저 알림
     socket.emit('set-user', { nickname: user.nickname, icon: user.icon, mode });
     socket.emit('get-rooms', { mode });
+    socket.emit('get-profile', { nickname: user.nickname });
 
     socket.on('room-list', (roomList) => {
       setRooms(roomList);
@@ -30,12 +33,25 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
       onJoinRoomRef.current(roomName);
     });
 
+    socket.on('profile-data', (p) => {
+      if (p && p.nickname === user.nickname) setMyProfile(p);
+    });
+
     return () => {
       socket.off('room-list');
       socket.off('room-list-updated');
       socket.off('room-created');
+      socket.off('profile-data');
     };
   }, [user.nickname]);
+
+  const handleClaudeClick = () => {
+    if (!isUnlocked('ai_claude', myProfile)) {
+      alert(getLockMessage('ai_claude'));
+      return;
+    }
+    onJoinRoom(`__claude__${user.nickname}`);
+  };
 
   const [newRoomPassword, setNewRoomPassword] = useState('');
 
@@ -99,15 +115,24 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
 
       <div className="room-list-content">
         {/* 클로드 AI 채팅방 */}
-        <button className="claude-banner" onClick={() => onJoinRoom(`__claude__${user.nickname}`)}>
-          <div className="claude-banner-icon">🤖</div>
+        <button
+          className={`claude-banner ${!isUnlocked('ai_claude', myProfile) ? 'locked-btn' : ''}`}
+          onClick={handleClaudeClick}
+        >
+          <div className="claude-banner-icon">{isUnlocked('ai_claude', myProfile) ? '🤖' : '🔒'}</div>
           <div className="claude-banner-info">
-            <span className="claude-banner-title">✨ 클로드와 1:1 채팅</span>
-            <span className="claude-banner-desc">진짜 AI랑 대화하기 - 뭐든지 물어봐!</span>
+            <span className="claude-banner-title">
+              {isUnlocked('ai_claude', myProfile) ? '✨ 클로드와 1:1 채팅' : '🔒 클로드 AI (잠김)'}
+            </span>
+            <span className="claude-banner-desc">
+              {isUnlocked('ai_claude', myProfile)
+                ? '진짜 AI랑 대화하기 - 뭐든지 물어봐!'
+                : '💬 수다쟁이 배지 필요 (메시지 100개)'}
+            </span>
           </div>
           <div className="claude-banner-status">
             <span className="claude-pulse"></span>
-            ONLINE
+            {isUnlocked('ai_claude', myProfile) ? 'ONLINE' : 'LOCKED'}
           </div>
         </button>
 

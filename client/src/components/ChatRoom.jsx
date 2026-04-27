@@ -4,6 +4,7 @@ import { getMode } from '../mode';
 import VoiceRecorder from './VoiceRecorder';
 import VideoRecorder from './VideoRecorder';
 import PartyEffect, { hasPartyTrigger } from './PartyEffect';
+import { isUnlocked, getLockMessage } from '../unlocks';
 import Message from './Message';
 
 // 큰 스티커 (카톡 이모티콘처럼)
@@ -198,6 +199,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   const [showCommands, setShowCommands] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
+  const [myProfile, setMyProfile] = useState(null);
   const [partyTrigger, setPartyTrigger] = useState(0);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
@@ -228,6 +230,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
     const joinRoom = () => {
       socket.emit('set-user', { nickname: user.nickname, icon: user.icon, mode: getMode() });
       socket.emit('join-room', roomName, { mode: getMode() });
+      socket.emit('get-profile', { nickname: user.nickname });
     };
 
     joinRoom();
@@ -239,6 +242,12 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
 
     socket.on('disconnect', () => {
       setConnected(false);
+    });
+
+    socket.on('profile-data', (p) => {
+      if (p && p.nickname === user.nickname) {
+        setMyProfile(p);
+      }
     });
 
     socket.on('room-history', (history) => {
@@ -256,9 +265,13 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       if (!isFirstLoad.current && msg.nickname !== user.nickname && soundOnRef.current && document.visibilityState === 'visible') {
         playNotificationSound();
       }
-      // 🎉 파티 효과 트리거!
-      if (!isFirstLoad.current && hasPartyTrigger(msg.text)) {
+      // 🎉 파티 효과 트리거! (잠금 해제된 사람만)
+      if (!isFirstLoad.current && hasPartyTrigger(msg.text) && isUnlocked('party_effect', myProfile)) {
         setPartyTrigger(t => t + 1);
+      }
+      // 내 메시지면 프로필 갱신 (XP/배지 업데이트)
+      if (msg.nickname === user.nickname && !msg.isBot) {
+        setTimeout(() => socket.emit('get-profile', { nickname: user.nickname }), 300);
       }
     });
 
@@ -322,6 +335,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       socket.emit('leave-room', roomName, { mode: getMode() });
       socket.off('connect');
       socket.off('disconnect');
+      socket.off('profile-data');
       socket.off('room-history');
       socket.off('new-message');
       socket.off('message-updated');
@@ -471,6 +485,13 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
 
   const handleReact = (messageId, emoji) => {
     socket.emit('react-message', { roomName, messageId, emoji, mode: getMode() });
+  };
+
+  // 잠금 기능 클릭 시 안내
+  const checkUnlockOrAlert = (featureKey) => {
+    if (isUnlocked(featureKey, myProfile)) return true;
+    alert(getLockMessage(featureKey));
+    return false;
   };
 
   const handleVoiceSend = (audioData, duration) => {
@@ -778,11 +799,14 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
         </button>
         <button
           type="button"
-          className={`emoji-toggle-btn ${showStickers ? 'active' : ''}`}
-          onClick={() => { setShowStickers(!showStickers); setShowEmoticons(false); setShowCommands(false); }}
-          title="스티커"
+          className={`emoji-toggle-btn ${showStickers ? 'active' : ''} ${!isUnlocked('sticker', myProfile) ? 'locked-btn' : ''}`}
+          onClick={() => {
+            if (!checkUnlockOrAlert('sticker')) return;
+            setShowStickers(!showStickers); setShowEmoticons(false); setShowCommands(false);
+          }}
+          title={isUnlocked('sticker', myProfile) ? '스티커' : '🔒 잠김'}
         >
-          🎨
+          {isUnlocked('sticker', myProfile) ? '🎨' : '🔒'}
         </button>
         <button
           type="button"
@@ -802,19 +826,25 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
         </button>
         <button
           type="button"
-          className="image-btn"
-          onClick={() => setShowVideoRecorder(true)}
-          title="비디오 촬영/전송"
+          className={`image-btn ${!isUnlocked('video_message', myProfile) ? 'locked-btn' : ''}`}
+          onClick={() => {
+            if (!checkUnlockOrAlert('video_message')) return;
+            setShowVideoRecorder(true);
+          }}
+          title={isUnlocked('video_message', myProfile) ? '비디오 촬영/전송' : '🔒 Lv.3 필요'}
         >
-          🎥
+          {isUnlocked('video_message', myProfile) ? '🎥' : '🔒'}
         </button>
         <button
           type="button"
-          className="image-btn"
-          onClick={() => setShowVoiceRecorder(true)}
-          title="음성 메시지"
+          className={`image-btn ${!isUnlocked('voice_message', myProfile) ? 'locked-btn' : ''}`}
+          onClick={() => {
+            if (!checkUnlockOrAlert('voice_message')) return;
+            setShowVoiceRecorder(true);
+          }}
+          title={isUnlocked('voice_message', myProfile) ? '음성 메시지' : '🔒 베테랑 배지 필요'}
         >
-          🎤
+          {isUnlocked('voice_message', myProfile) ? '🎤' : '🔒'}
         </button>
         <input
           ref={fileInputRef}
