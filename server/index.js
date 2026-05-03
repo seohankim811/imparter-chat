@@ -48,6 +48,9 @@ const rooms = new Map();
 const users = new Map();
 const profiles = new Map(); // nickname -> { xp, level, badges, messageCount }
 
+// 관리자 닉네임 — 모든 배지/레벨 자동 부여
+const ADMIN_NICKNAMES = new Set(['서한']);
+
 // ===== 레벨/배지 시스템 =====
 const BADGES = {
   first_message: { emoji: '🌱', name: '첫 발자국', desc: '첫 메시지 전송' },
@@ -78,7 +81,17 @@ function getProfile(nickname) {
       gamesWon: 0
     });
   }
-  return profiles.get(nickname);
+  const profile = profiles.get(nickname);
+  if (ADMIN_NICKNAMES.has(nickname)) {
+    const allBadges = Object.keys(BADGES);
+    let changed = false;
+    for (const b of allBadges) {
+      if (!profile.badges.includes(b)) { profile.badges.push(b); changed = true; }
+    }
+    if (profile.level < 99) { profile.level = 99; changed = true; }
+    if (changed) saveProfiles();
+  }
+  return profile;
 }
 
 function addXP(nickname, amount) {
