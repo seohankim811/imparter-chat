@@ -3217,3 +3217,299 @@ body {
 [data-mode="canva"] .video-recorder-preview {
   background: #1d1d1f;
 }
+
+/* ===== 카드 배틀 게임 ===== */
+.cb-screen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, #0a0e27, #1a0e3a);
+  color: #fff;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Gothic A1', 'Segoe UI', sans-serif;
+}
+.cb-battle-bg {
+  background:
+    radial-gradient(circle at 50% 100%, rgba(255,80,80,0.18), transparent 60%),
+    radial-gradient(circle at 50% 0%, rgba(80,140,255,0.18), transparent 60%),
+    linear-gradient(180deg, #0a0e27, #1a0a2a);
+}
+.cb-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(150, 180, 255, 0.12);
+  background: rgba(10, 12, 30, 0.6);
+  backdrop-filter: blur(8px);
+}
+.cb-header h2 {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+.cb-faction-tag {
+  font-size: 13px;
+  font-weight: 600;
+}
+.cb-intro {
+  padding: 20px;
+  text-align: center;
+}
+.cb-intro-line { font-size: 15px; margin: 4px 0; }
+.cb-intro-line.cb-faint { font-size: 12px; opacity: 0.6; }
+.cb-faction-row {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.cb-faction-card {
+  flex: 1;
+  min-width: 260px;
+  max-width: 360px;
+  padding: 24px;
+  background: rgba(20, 24, 50, 0.7);
+  border: 2px solid;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  color: #fff;
+  text-align: center;
+}
+.cb-faction-card:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+.cb-faction-emoji { font-size: 56px; margin-bottom: 10px; }
+.cb-faction-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.cb-faction-desc { font-size: 13px; opacity: 0.7; margin-bottom: 12px; }
+.cb-faction-cards { display: flex; gap: 6px; justify-content: center; }
+.cb-mini-card {
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* 배틀 영역 */
+.cb-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  transition: transform 0.1s;
+}
+.cb-row-enemy { padding-top: 16px; }
+.cb-row-player { padding-bottom: 16px; border-top: 1px dashed rgba(150,180,255,0.15); margin-top: 0; }
+.cb-shake { animation: cbShake 0.5s; }
+@keyframes cbShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+.cb-vs-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+}
+.cb-vs-text {
+  font-size: 22px;
+  font-weight: 900;
+  text-shadow: 0 0 16px rgba(255,215,100,0.6);
+  animation: cbPulse 0.6s ease-out;
+}
+@keyframes cbPulse {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.cb-pick-hint { font-size: 13px; opacity: 0.55; }
+
+/* 카드 */
+.cb-card {
+  width: 110px;
+  height: 160px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: all 0.25s ease;
+  user-select: none;
+}
+.cb-card.cb-interactive { cursor: pointer; }
+.cb-card.cb-interactive:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(150,180,255,0.4);
+}
+.cb-card.cb-highlight {
+  outline: 3px solid #ffd76a;
+  box-shadow: 0 0 24px rgba(255,215,100,0.7);
+}
+.cb-card.cb-dimmed {
+  opacity: 0.3;
+  filter: grayscale(1);
+  transform: scale(0.92);
+  cursor: not-allowed;
+}
+.cb-card-back {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  opacity: 0.6;
+}
+.cb-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.cb-card-type {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 700;
+}
+.cb-card-atk { font-size: 11px; font-weight: 800; }
+.cb-card-emoji {
+  font-size: 36px;
+  text-align: center;
+  margin: 4px 0;
+}
+.cb-card-name {
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cb-card-desc {
+  font-size: 9px;
+  text-align: center;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+.cb-card-hp {
+  height: 14px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 7px;
+  position: relative;
+  overflow: hidden;
+  margin-top: auto;
+}
+.cb-card-hp-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+.cb-card-hp-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 800;
+  text-shadow: 0 0 4px #000;
+}
+
+/* 결과 화면 */
+.cb-result {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.cb-result-title {
+  font-size: 56px;
+  font-weight: 900;
+  text-shadow: 0 0 30px currentColor;
+  animation: cbResultPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes cbResultPop {
+  0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.cb-result.cb-win .cb-result-title, .cb-win { color: #ffd76a; }
+.cb-result.cb-lose .cb-result-title, .cb-lose { color: #ff5e6e; }
+.cb-result.cb-draw .cb-result-title, .cb-draw { color: #6acfff; }
+.cb-result-xp {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4cd964;
+}
+.cb-result-btns { display: flex; gap: 12px; margin-top: 12px; }
+.cb-btn-primary, .cb-btn-secondary {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cb-btn-primary {
+  background: linear-gradient(135deg, #6a4bd1, #4b7ad1);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(106, 75, 209, 0.4);
+}
+.cb-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(106, 75, 209, 0.6); }
+.cb-btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.cb-btn-secondary:hover { background: rgba(255,255,255,0.18); }
+
+/* 카드 배틀 배너 */
+.game-banner-cardbattle {
+  background: linear-gradient(135deg, rgba(106, 75, 209, 0.4), rgba(209, 75, 75, 0.4)) !important;
+  border-color: rgba(255, 215, 100, 0.3) !important;
+}
+.game-banner-cardbattle:hover {
+  background: linear-gradient(135deg, rgba(106, 75, 209, 0.55), rgba(209, 75, 75, 0.55)) !important;
+}
+
+/* 모바일 */
+@media (max-width: 600px) {
+  .cb-card {
+    width: 70px;
+    height: 110px;
+    padding: 5px;
+  }
+  .cb-card-emoji { font-size: 24px; }
+  .cb-card-name { font-size: 9px; }
+  .cb-card-desc { font-size: 7px; }
+  .cb-card-atk { font-size: 9px; }
+  .cb-card-type { font-size: 9px; padding: 1px 4px; }
+  .cb-card-hp { height: 10px; }
+  .cb-card-hp-text { font-size: 7px; }
+  .cb-row { gap: 4px; padding: 6px; }
+  .cb-vs-text { font-size: 16px; }
+  .cb-result-title { font-size: 38px; }
+  .cb-faction-card { padding: 16px; min-width: 200px; }
+  .cb-faction-emoji { font-size: 40px; }
+  .cb-faction-name { font-size: 18px; }
+}

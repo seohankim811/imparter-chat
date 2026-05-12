@@ -1,4 +1,5 @@
 import React from 'react';
+import CardBattle from './CardBattle';
 
 const GAMES = {
   rts: {
@@ -11,9 +12,13 @@ const GAMES = {
   }
 };
 
-export default function GameScreen({ gameId, onBack }) {
-  const game = GAMES[gameId] || GAMES.rts;
+export default function GameScreen({ gameId, user, onBack }) {
+  // React 내장 게임
+  if (gameId === 'cardbattle') {
+    return <CardBattle user={user} onBack={onBack} />;
+  }
 
+  const game = GAMES[gameId] || GAMES.rts;
   return (
     <div className="game-screen">
       <div className="game-header">

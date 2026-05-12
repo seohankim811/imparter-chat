@@ -1677,6 +1677,28 @@ io.on('connection', (socket) => {
     });
   });
 
+  // 카드 배틀 결과
+  socket.on('card-battle-result', ({ result, xp }) => {
+    const user = users.get(socket.id);
+    if (!user) return;
+    const profile = getProfile(user.nickname);
+    profile.gamesPlayed = (profile.gamesPlayed || 0) + 1;
+    if (result === 'win') profile.gamesWon = (profile.gamesWon || 0) + 1;
+    const safeXp = Math.max(0, Math.min(100, parseInt(xp) || 0));
+    const leveledUp = addXP(user.nickname, safeXp);
+    const newBadges = checkBadges(profile);
+    saveProfiles();
+    if (leveledUp) {
+      socket.emit('unlock-celebration', { type: 'level', level: profile.level });
+    }
+    for (const badgeKey of newBadges) {
+      const badge = BADGES[badgeKey];
+      if (badge) {
+        socket.emit('unlock-celebration', { type: 'badge', badgeKey, emoji: badge.emoji, name: badge.name });
+      }
+    }
+  });
+
   socket.on('disconnect', () => {
     const user = users.get(socket.id);
     for (const [fullName, room] of rooms) {

@@ -138,24 +138,34 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
 
         {/* 게임 배너 (잃도수 모드만) */}
         {isKotlc && (
-          <div className="game-banners-row">
-            <button className="game-banner game-banner-half" onClick={() => onOpenGame('rts')}>
+          <>
+            <div className="game-banners-row">
+              <button className="game-banner game-banner-half" onClick={() => onOpenGame('rts')}>
+                <div className="game-banner-icon">⚔️</div>
+                <div className="game-banner-info">
+                  <span className="game-banner-title">잃도수 RTS</span>
+                  <span className="game-banner-desc">실시간 전략</span>
+                </div>
+                <div className="game-banner-play">▶</div>
+              </button>
+              <button className="game-banner game-banner-half game-banner-keeper" onClick={() => onOpenGame('keeper')}>
+                <div className="game-banner-icon">🏰</div>
+                <div className="game-banner-info">
+                  <span className="game-banner-title">갓물주 잃도수</span>
+                  <span className="game-banner-desc">키우기 게임</span>
+                </div>
+                <div className="game-banner-play">▶</div>
+              </button>
+            </div>
+            <button className="game-banner game-banner-cardbattle" onClick={() => onOpenGame('cardbattle')}>
               <div className="game-banner-icon">⚔️</div>
               <div className="game-banner-info">
-                <span className="game-banner-title">잃도수 RTS</span>
-                <span className="game-banner-desc">실시간 전략</span>
+                <span className="game-banner-title">🌹 블랙스완 vs 🖤 마티치</span>
+                <span className="game-banner-desc">진영 골라 카드 배틀! Sophie·Keefe·Fintan…</span>
               </div>
               <div className="game-banner-play">▶</div>
             </button>
-            <button className="game-banner game-banner-half game-banner-keeper" onClick={() => onOpenGame('keeper')}>
-              <div className="game-banner-icon">🏰</div>
-              <div className="game-banner-info">
-                <span className="game-banner-title">갓물주 잃도수</span>
-                <span className="game-banner-desc">키우기 게임</span>
-              </div>
-              <div className="game-banner-play">▶</div>
-            </button>
-          </div>
+          </>
         )}
 
         {rooms.length === 0 && !showCreate && (

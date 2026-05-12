@@ -138,7 +138,7 @@ export default function App() {
   if (currentGame) {
     return (
       <>
-        <GameScreen gameId={currentGame} onBack={handleCloseGame} />
+        <GameScreen gameId={currentGame} user={user} onBack={handleCloseGame} />
         <UnlockToast />
       </>
     );
