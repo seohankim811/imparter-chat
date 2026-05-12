@@ -7,6 +7,7 @@ import GameScreen from './components/GameScreen';
 import ParticleBackground from './components/ParticleBackground';
 import BGMPlayer from './components/BGMPlayer';
 import ProfilePage from './components/ProfilePage';
+import UnlockToast from './components/UnlockToast';
 import { getMode, getCurrentModeConfig } from './mode';
 
 // localStorage 키에 모드 접미사 (잃도수/일반 완전 분리)
@@ -135,7 +136,12 @@ export default function App() {
   }
 
   if (currentGame) {
-    return <GameScreen gameId={currentGame} onBack={handleCloseGame} />;
+    return (
+      <>
+        <GameScreen gameId={currentGame} onBack={handleCloseGame} />
+        <UnlockToast />
+      </>
+    );
   }
 
   if (showProfile) {
@@ -151,6 +157,7 @@ export default function App() {
           onToggleBgm={toggleBgm}
           onBack={handleCloseProfile}
         />
+        <UnlockToast />
       </>
     );
   }
@@ -169,6 +176,7 @@ export default function App() {
           theme={theme}
           toggleTheme={toggleTheme}
         />
+        <UnlockToast />
       </>
     );
   }
@@ -184,6 +192,7 @@ export default function App() {
         theme={theme}
         toggleTheme={toggleTheme}
       />
+      <UnlockToast />
     </>
   );
 }

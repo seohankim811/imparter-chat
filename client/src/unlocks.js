@@ -56,3 +56,17 @@ export function getLockMessage(featureKey) {
   if (!unlock) return '';
   return `🔒 잠긴 기능: ${unlock.name}\n\n${unlock.requiresLabel}\n\n계속 채팅하면 자동으로 잠금 해제돼요!`;
 }
+
+// 새 배지 획득 시 잠금 해제된 기능 목록
+export function unlocksFromBadge(badgeKey) {
+  return Object.entries(UNLOCKS)
+    .filter(([, u]) => u.requires.type === 'badge' && u.requires.badge === badgeKey)
+    .map(([key, u]) => ({ key, name: u.name }));
+}
+
+// 레벨업 시 잠금 해제된 기능 목록
+export function unlocksFromLevel(newLevel) {
+  return Object.entries(UNLOCKS)
+    .filter(([, u]) => u.requires.type === 'level' && u.requires.level === newLevel)
+    .map(([key, u]) => ({ key, name: u.name }));
+}

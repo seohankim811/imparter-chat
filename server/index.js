@@ -1416,6 +1416,7 @@ io.on('connection', (socket) => {
           text: `🎉 ${user.nickname}님이 Lv.${profile.level}로 레벨업! ✨`,
           timestamp: Date.now()
         });
+        socket.emit('unlock-celebration', { type: 'level', level: profile.level });
       }
       for (const badgeKey of newBadges) {
         const badge = BADGES[badgeKey];
@@ -1424,6 +1425,7 @@ io.on('connection', (socket) => {
             text: `🏅 ${user.nickname}님이 "${badge.emoji} ${badge.name}" 배지를 획득했어요!`,
             timestamp: Date.now()
           });
+          socket.emit('unlock-celebration', { type: 'badge', badgeKey, emoji: badge.emoji, name: badge.name });
         }
       }
     }
