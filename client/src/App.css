@@ -1242,6 +1242,26 @@ body {
   padding: 1px 7px;
   border-radius: 8px;
   letter-spacing: 0.5px;
+  margin-left: 6px;
+}
+.owner-badge-admin {
+  background: linear-gradient(135deg, rgba(180, 60, 200, 0.55), rgba(220, 90, 255, 0.35));
+  border-color: rgba(220, 130, 255, 0.5);
+  color: #f5d4ff;
+}
+
+/* 관리자 전용 비밀번호 표시 */
+.admin-password-tag {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(180, 60, 200, 0.55), rgba(220, 90, 255, 0.35));
+  border: 1px solid rgba(220, 130, 255, 0.5);
+  color: #f5d4ff;
+  vertical-align: middle;
+  letter-spacing: 0.3px;
 }
 
 .kick-btn {

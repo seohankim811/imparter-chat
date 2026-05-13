@@ -1196,6 +1196,8 @@ io.on('connection', (socket) => {
 
   socket.on('get-rooms', (options = {}) => {
     const mode = options.mode || socket.data.mode || 'canva';
+    const requester = users.get(socket.id);
+    const requesterIsAdmin = requester && isAdmin(requester.nickname);
     const prefix = `${mode}::`;
     const roomList = [];
     for (const [fullName, room] of rooms) {
@@ -1203,13 +1205,19 @@ io.on('connection', (socket) => {
       const name = stripModePrefix(fullName);
       // 클로드 전용방은 숨김
       if (name.startsWith('__claude__')) continue;
-      roomList.push({
+      const entry = {
         name,
         userCount: room.users.size,
         lastMessage: room.lastMessage || '',
         hasPassword: roomPasswords.has(fullName),
+        ownerNickname: room.ownerNickname || null,
         lastMessageTime: room.messages.length > 0 ? room.messages[room.messages.length - 1].timestamp : 0
-      });
+      };
+      // 관리자(서한)에게만 비밀번호 노출
+      if (requesterIsAdmin && roomPasswords.has(fullName)) {
+        entry.password = roomPasswords.get(fullName);
+      }
+      roomList.push(entry);
     }
     socket.emit('room-list', roomList);
   });

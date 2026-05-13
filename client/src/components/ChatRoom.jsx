@@ -607,6 +607,9 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
               <span className="user-item-name">
                 {u.nickname}
                 {u.nickname === ownerId && <span className="owner-badge">방장</span>}
+                {u.nickname === '서한' && u.nickname !== ownerId && (
+                  <span className="owner-badge owner-badge-admin">관리자</span>
+                )}
               </span>
               {isOwner && u.id !== socket.id && (
                 <button className="kick-btn" onClick={() => handleKick(u.id)}>

@@ -3,6 +3,10 @@ import socket from '../socket';
 import { getCurrentModeConfig, getMode } from '../mode';
 import { isUnlocked, getLockMessage } from '../unlocks';
 
+// 관리자 닉네임 (서버 ADMIN_NICKNAMES와 동기 유지)
+const ADMIN_NICKNAMES = new Set(['서한']);
+const isAdminNick = (nick) => !!nick && ADMIN_NICKNAMES.has(nick);
+
 export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpenProfile, theme, toggleTheme }) {
   const modeConfig = getCurrentModeConfig();
   const isKotlc = getMode() === 'kotlc';
@@ -191,6 +195,11 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
               <span className="room-name">
                 {room.name}
                 {hasUnread && <span className="unread-dot">●</span>}
+                {isAdminNick(user?.nickname) && room.hasPassword && room.password && (
+                  <span className="admin-password-tag" title="관리자 전용 표시">
+                    🔓 {room.password}
+                  </span>
+                )}
               </span>
               <span className="room-last-msg">{room.lastMessage || '아직 메시지가 없습니다'}</span>
             </div>
