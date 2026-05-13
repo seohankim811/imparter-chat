@@ -8,30 +8,29 @@ const TYPES = {
   water:  { emoji: '💧', name: '물',   color: '#3aa6ff' },
   mind:   { emoji: '🧠', name: '정신', color: '#c46aff' }
 };
-// 누가 누구 이김: A → BEATS[A] (A가 BEATS[A]를 이김)
 const BEATS = { fire: 'nature', nature: 'water', water: 'mind', mind: 'fire' };
 
 // ===== 카드 데이터 =====
-// cost: 마나, atk: 공격력, hp: 체력, ability: 등장 효과 (battlecry)
+// cost: 마나, atk: 공격력, hp: 체력, ability: 등장 효과
 const CARDS = {
   blackswan: [
     { id: 'sophie',   name: 'Sophie Foster',  emoji: '🌙', type: 'mind',   cost: 4, atk: 4, hp: 5, ability: 'random_dmg_3', abilityText: '등장: 적 카드 1장에 3 데미지' },
     { id: 'keefe',    name: 'Keefe Sencen',   emoji: '😏', type: 'nature', cost: 3, atk: 3, hp: 4, ability: 'heal_4',       abilityText: '등장: 리더 4 회복' },
-    { id: 'fitz',     name: 'Fitz Vacker',    emoji: '🎩', type: 'mind',   cost: 3, atk: 3, hp: 3, ability: 'draw_1',       abilityText: '등장: 카드 1장 드로우' },
-    { id: 'biana',    name: 'Biana Vacker',   emoji: '👻', type: 'water',  cost: 2, atk: 3, hp: 2, ability: 'stealth',      abilityText: '은신: 다음 턴까지 공격 못 받음' },
-    { id: 'dex',      name: 'Dex Dizznee',    emoji: '🔧', type: 'nature', cost: 2, atk: 2, hp: 3, ability: 'mana_1',       abilityText: '등장: 현재 마나 +1' },
-    { id: 'grady',    name: 'Grady Ruewen',   emoji: '👨‍🦰', type: 'mind',   cost: 5, atk: 5, hp: 5, ability: null,           abilityText: '' },
-    { id: 'edaline',  name: 'Edaline',        emoji: '👩‍🦰', type: 'nature', cost: 4, atk: 2, hp: 5, ability: 'heal_per_turn', abilityText: '턴 끝: 리더 2 회복' },
+    { id: 'fitz',     name: 'Fitz Vacker',    emoji: '🎩', type: 'mind',   cost: 3, atk: 3, hp: 3, ability: 'mana_1',       abilityText: '등장: 마나 +1' },
+    { id: 'biana',    name: 'Biana Vacker',   emoji: '👻', type: 'water',  cost: 2, atk: 3, hp: 2, ability: 'stealth',      abilityText: '은신: 3초간 공격 못 받음' },
+    { id: 'dex',      name: 'Dex Dizznee',    emoji: '🔧', type: 'nature', cost: 2, atk: 2, hp: 3, ability: 'mana_1',       abilityText: '등장: 마나 +1' },
+    { id: 'grady',    name: 'Grady Ruewen',   emoji: '👨‍🦰', type: 'mind',   cost: 5, atk: 5, hp: 5, ability: null,           abilityText: '강력한 텔레파시' },
+    { id: 'edaline',  name: 'Edaline',        emoji: '👩‍🦰', type: 'nature', cost: 4, atk: 2, hp: 5, ability: 'heal_4',       abilityText: '등장: 리더 4 회복' },
     { id: 'tiergan',  name: 'Tiergan',        emoji: '🧙', type: 'mind',   cost: 4, atk: 4, hp: 4, ability: 'silence',      abilityText: '등장: 적 카드 능력 침묵' }
   ],
   neverseen: [
     { id: 'fintan',   name: 'Fintan Pyren',   emoji: '🔥', type: 'fire',   cost: 5, atk: 5, hp: 5, ability: 'aoe_2',        abilityText: '등장: 모든 적 카드 2 데미지' },
     { id: 'brant',    name: 'Brant',          emoji: '👨‍🦱', type: 'fire',   cost: 3, atk: 3, hp: 3, ability: 'random_dmg_2', abilityText: '등장: 적 카드 1장에 2 데미지' },
-    { id: 'vespera',  name: 'Vespera',        emoji: '🦂', type: 'mind',   cost: 5, atk: 4, hp: 5, ability: 'inflict',      abilityText: '등장: 턴 끝마다 적 리더 1 데미지' },
-    { id: 'gethen',   name: 'Gethen',         emoji: '🕴️', type: 'mind',   cost: 4, atk: 4, hp: 4, ability: 'draw_1',       abilityText: '등장: 카드 1장 드로우' },
+    { id: 'vespera',  name: 'Vespera',        emoji: '🦂', type: 'mind',   cost: 5, atk: 4, hp: 5, ability: 'face_dmg_3',   abilityText: '등장: 적 리더 3 데미지' },
+    { id: 'gethen',   name: 'Gethen',         emoji: '🕴️', type: 'mind',   cost: 4, atk: 4, hp: 4, ability: null,           abilityText: '텔레파시' },
     { id: 'ruy',      name: 'Ruy Ignis',      emoji: '💎', type: 'water',  cost: 3, atk: 2, hp: 4, ability: 'phaser',       abilityText: '페이저: 50% 회피 (1회)' },
-    { id: 'umber',    name: 'Umber',          emoji: '🌑', type: 'mind',   cost: 3, atk: 3, hp: 3, ability: 'stealth',      abilityText: '은신: 다음 턴까지 공격 못 받음' },
-    { id: 'trix',     name: 'Trix',           emoji: '✨', type: 'water',  cost: 2, atk: 2, hp: 2, ability: null,           abilityText: '' },
+    { id: 'umber',    name: 'Umber',          emoji: '🌑', type: 'mind',   cost: 3, atk: 3, hp: 3, ability: 'stealth',      abilityText: '은신: 3초간 공격 못 받음' },
+    { id: 'trix',     name: 'Trix',           emoji: '✨', type: 'water',  cost: 2, atk: 2, hp: 2, ability: null,           abilityText: '빠른 카드' },
     { id: 'gisela',   name: 'Lady Gisela',    emoji: '👑', type: 'mind',   cost: 6, atk: 6, hp: 6, ability: 'face_dmg_3',   abilityText: '등장: 적 리더 3 데미지' }
   ]
 };
@@ -40,6 +39,24 @@ const FACTION_INFO = {
   blackswan: { name: '블랙스완',           emoji: '🌹', desc: 'Sophie와 친구들',   color: '#4bd1a8' },
   neverseen: { name: '마티치 (Neverseen)', emoji: '🖤', desc: 'Fintan과 추종자들', color: '#d14b4b' }
 };
+
+// ===== 상수 =====
+const LEADER_MAX = 30;
+const PLAYER_BONUS_HP = 15;      // 플레이어 시작 HP 45 (AI는 30)
+const FIELD_MAX = 4;
+const HAND_MAX = 7;
+const STARTING_HAND = 4;
+const STARTING_MANA_PLAYER = 3;  // 플레이어는 3마나로 시작 (Dex/Biana/Trix 즉시 가능)
+const STARTING_MANA_ENEMY = 0;   // AI는 0부터 (느리게 시작)
+const MAX_MANA = 10;
+const MANA_TICK_MS_PLAYER = 1000;    // 플레이어: 1초에 1
+const MANA_TICK_MS_ENEMY = 2000;     // AI: 2초에 1 (절반 속도)
+const DRAW_TICK_MS = 5000;
+const SUMMONING_SICKNESS_MS = 1500;
+const SUMMONING_SICKNESS_MS_ENEMY = 2500; // AI 카드는 더 오래 대기
+const ATTACK_COOLDOWN_MS = 1800;
+const ATTACK_COOLDOWN_MS_ENEMY = 2500; // AI 공격 쿨 더 길게
+const STEALTH_DURATION_MS = 3000;
 
 // ===== 유틸 =====
 let __cardUid = 0;
@@ -52,83 +69,85 @@ function shuffle(arr) {
   }
   return a;
 }
-function instantiate(template) {
+function instantiate(template, now, side = 'player') {
+  const sickness = side === 'enemy' ? SUMMONING_SICKNESS_MS_ENEMY : SUMMONING_SICKNESS_MS;
   return {
     ...template,
     uid: uid(),
+    side,
     currentHp: template.hp,
-    canAttack: false, // 등장한 턴엔 못 침 (Hearthstone Summoning Sickness)
-    stealth: template.ability === 'stealth',
+    readyAt: now + sickness,
+    stealthUntil: template.ability === 'stealth' ? now + STEALTH_DURATION_MS : 0,
     phaserCharged: template.ability === 'phaser',
     silenced: false
   };
 }
-
-const LEADER_MAX = 30;
-const FIELD_MAX = 4;
-const HAND_MAX = 7;
-const STARTING_HAND = 3;
-const MAX_MANA = 10;
 
 // ===== 메인 컴포넌트 =====
 export default function CardBattle({ user, onBack }) {
   const [stage, setStage] = useState('faction');
   const [faction, setFaction] = useState(null);
 
-  // 게임 상태
   const [state, setState] = useState(null);
   const [log, setLog] = useState([]);
   const [pendingTarget, setPendingTarget] = useState(null); // { attackerUid }
-  const [animQueue, setAnimQueue] = useState([]);
-  const aiTurnLockRef = useRef(false);
+  const [tick, setTick] = useState(0); // 강제 리렌더용 (쿨다운/은신 시간 진행)
 
-  const pushLog = useCallback((text) => {
-    setLog(l => [...l.slice(-7), { id: Date.now() + Math.random(), text }]);
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+
+  // ===== 로그 =====
+  const flushLogs = useCallback((logs) => {
+    if (!logs || logs.length === 0) return;
+    setLog(l => {
+      const newEntries = logs.map((t, i) => ({ id: Date.now() + Math.random() + i, text: t }));
+      return [...l.slice(-8), ...newEntries];
+    });
   }, []);
 
+  // ===== 시작 =====
   const startBattle = (chosenFaction) => {
+    const now = Date.now();
     setFaction(chosenFaction);
-    const playerDeck = shuffle(CARDS[chosenFaction].map(instantiate));
+    const playerDeck = shuffle(CARDS[chosenFaction].map(c => instantiate(c, now, 'player')));
     const enemyFaction = chosenFaction === 'blackswan' ? 'neverseen' : 'blackswan';
-    const enemyDeck = shuffle(CARDS[enemyFaction].map(instantiate));
+    const enemyDeck = shuffle(CARDS[enemyFaction].map(c => instantiate(c, now, 'enemy')));
     const playerHand = playerDeck.splice(0, STARTING_HAND);
     const enemyHand = enemyDeck.splice(0, STARTING_HAND);
     setState({
+      startTime: now,
+      lastManaTickAtPlayer: now,
+      lastManaTickAtEnemy: now,
+      lastDrawTickAt: now,
       player: {
-        leaderHp: LEADER_MAX,
-        mana: 1,
-        maxMana: 1,
+        leaderHp: LEADER_MAX + PLAYER_BONUS_HP,
+        leaderHpMax: LEADER_MAX + PLAYER_BONUS_HP,
+        mana: STARTING_MANA_PLAYER,
         deck: playerDeck,
         hand: playerHand,
-        field: [],
-        burnPerTurn: 0
+        field: []
       },
       enemy: {
         leaderHp: LEADER_MAX,
-        mana: 1,
-        maxMana: 1,
+        leaderHpMax: LEADER_MAX,
+        mana: STARTING_MANA_ENEMY,
         deck: enemyDeck,
         hand: enemyHand,
-        field: [],
-        burnPerTurn: 0
+        field: []
       },
-      turn: 'player',
-      turnCount: 1,
       gameOver: null
     });
-    setLog([{ id: Date.now(), text: '⚔️ 배틀 시작!' }]);
+    setLog([{ id: Date.now(), text: '⚔️ 배틀 시작! 마나가 1초마다 차요. 카드 클릭해서 내고, 필드 카드 클릭해서 공격!' }]);
+    setPendingTarget(null);
     setStage('battle');
   };
 
-  // ===== 게임 로직 =====
-  // 능력 적용 — 순수 함수: { state, logs } 반환
-  const applyBattlecry = (state, side, playedCard) => {
+  // ===== 능력 적용 (순수) =====
+  const applyBattlecry = (st, side, playedCard) => {
     const logs = [];
-    if (!playedCard.ability || playedCard.silenced) {
-      return { state, logs };
-    }
+    if (!playedCard.ability || playedCard.silenced) return { state: st, logs };
     const opp = side === 'player' ? 'enemy' : 'player';
-    let s = { ...state };
+    let s = { ...st };
     const aliveEnemies = s[opp].field.filter(c => c.currentHp > 0);
 
     switch (playedCard.ability) {
@@ -137,59 +156,38 @@ export default function CardBattle({ user, onBack }) {
         const dmg = playedCard.ability === 'random_dmg_3' ? 3 : 2;
         if (aliveEnemies.length > 0) {
           const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          s[opp] = {
-            ...s[opp],
-            field: s[opp].field.map(c => c.uid === target.uid ? { ...c, currentHp: c.currentHp - dmg } : c)
-          };
-          logs.push(`${playedCard.emoji} ${playedCard.name} → ${target.emoji} ${target.name}에 ${dmg} 데미지`);
+          s[opp] = { ...s[opp], field: s[opp].field.map(c => c.uid === target.uid ? { ...c, currentHp: c.currentHp - dmg } : c) };
+          logs.push(`${playedCard.emoji} ${playedCard.name} → ${target.name}에 ${dmg} 데미지`);
         }
         break;
       }
       case 'aoe_2': {
-        s[opp] = {
-          ...s[opp],
-          field: s[opp].field.map(c => ({ ...c, currentHp: c.currentHp - 2 }))
-        };
+        s[opp] = { ...s[opp], field: s[opp].field.map(c => ({ ...c, currentHp: c.currentHp - 2 })) };
         if (aliveEnemies.length > 0) logs.push(`${playedCard.emoji} ${playedCard.name}: 모든 적 카드 2 데미지`);
         break;
       }
       case 'heal_4': {
-        s[side] = { ...s[side], leaderHp: Math.min(LEADER_MAX, s[side].leaderHp + 4) };
+        const maxHp = s[side].leaderHpMax || LEADER_MAX;
+        s[side] = { ...s[side], leaderHp: Math.min(maxHp, s[side].leaderHp + 4) };
         logs.push(`💚 ${playedCard.name}: 리더 4 회복`);
-        break;
-      }
-      case 'draw_1': {
-        if (s[side].deck.length > 0 && s[side].hand.length < HAND_MAX) {
-          const [drawn, ...rest] = s[side].deck;
-          s[side] = { ...s[side], deck: rest, hand: [...s[side].hand, drawn] };
-          logs.push(`🃏 ${playedCard.name}: 카드 드로우`);
-        }
         break;
       }
       case 'mana_1': {
         s[side] = { ...s[side], mana: Math.min(MAX_MANA, s[side].mana + 1) };
-        logs.push(`💎 ${playedCard.name}: 현재 마나 +1`);
+        logs.push(`💎 ${playedCard.name}: 마나 +1`);
         break;
       }
       case 'face_dmg_3': {
-        s[opp] = { ...s[opp], leaderHp: s[opp].leaderHp - 3 };
+        s[opp] = { ...s[opp], leaderHp: Math.max(0, s[opp].leaderHp - 3) };
         logs.push(`🎯 ${playedCard.name}: 적 리더 3 데미지`);
         break;
       }
       case 'silence': {
         if (aliveEnemies.length > 0) {
           const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          s[opp] = {
-            ...s[opp],
-            field: s[opp].field.map(c => c.uid === target.uid ? { ...c, silenced: true, stealth: false } : c)
-          };
+          s[opp] = { ...s[opp], field: s[opp].field.map(c => c.uid === target.uid ? { ...c, silenced: true, stealthUntil: 0 } : c) };
           logs.push(`🤫 ${playedCard.name}: ${target.name} 침묵`);
         }
-        break;
-      }
-      case 'inflict': {
-        s[opp] = { ...s[opp], burnPerTurn: (s[opp].burnPerTurn || 0) + 1 };
-        logs.push(`☠️ ${playedCard.name}: 적 리더에 인플릭트 부여`);
         break;
       }
       default: break;
@@ -201,31 +199,29 @@ export default function CardBattle({ user, onBack }) {
     return { state: s, logs };
   };
 
-  // 한 번에 상태 + 로그 적용 (StrictMode-safe)
-  const flushLogs = (logs) => {
-    if (!logs || logs.length === 0) return;
-    setLog(l => {
-      const newEntries = logs.map((t, i) => ({ id: Date.now() + Math.random() + i, text: t }));
-      return [...l.slice(-7), ...newEntries];
-    });
-  };
-
-  // 카드를 손에서 필드로 — side: 'player' | 'enemy'
-  const playCardFromHand = (side, cardUid) => {
+  // ===== 카드 내기 =====
+  const playCardFromHand = useCallback((side, cardUid) => {
     const cur = stateRef.current;
     if (!cur || cur.gameOver) return;
     const p = cur[side];
     const card = p.hand.find(c => c.uid === cardUid);
     if (!card) return;
     if (p.mana < card.cost) {
-      flushLogs(['💔 마나가 부족해요']);
+      if (side === 'player') flushLogs(['💔 마나 부족']);
       return;
     }
     if (p.field.length >= FIELD_MAX) {
-      flushLogs(['💔 필드가 꽉 찼어요']);
+      if (side === 'player') flushLogs(['💔 필드 꽉 참']);
       return;
     }
-    const playedCard = { ...card, canAttack: false };
+    const now = Date.now();
+    const sickness = side === 'enemy' ? SUMMONING_SICKNESS_MS_ENEMY : SUMMONING_SICKNESS_MS;
+    const playedCard = {
+      ...card,
+      side,
+      readyAt: now + sickness,
+      stealthUntil: card.ability === 'stealth' ? now + STEALTH_DURATION_MS : 0
+    };
     let s2 = {
       ...cur,
       [side]: {
@@ -235,56 +231,60 @@ export default function CardBattle({ user, onBack }) {
         field: [...p.field, playedCard]
       }
     };
-    const battlecry = applyBattlecry(s2, side, playedCard);
-    s2 = battlecry.state;
-    setState(s2);
+    const bc = applyBattlecry(s2, side, playedCard);
+    setState(bc.state);
     flushLogs([
-      `${side === 'player' ? '🟢' : '🔴'} ${card.emoji} ${card.name} 등장 (cost ${card.cost})`,
-      ...battlecry.logs
+      `${side === 'player' ? '🟢' : '🔴'} ${card.emoji} ${card.name} (${card.cost}💎)`,
+      ...bc.logs
     ]);
-  };
+  }, [flushLogs]);
 
-  // 공격: 공격자(side의 카드) → 대상 (opp의 카드 or 'face')
-  const performAttack = (side, attackerUid, target) => {
+  // ===== 공격 =====
+  const performAttack = useCallback((side, attackerUid, target) => {
     const cur = stateRef.current;
     if (!cur || cur.gameOver) return;
     const opp = side === 'player' ? 'enemy' : 'player';
     const attacker = cur[side].field.find(c => c.uid === attackerUid);
-    if (!attacker || !attacker.canAttack || attacker.currentHp <= 0) return;
+    if (!attacker || attacker.currentHp <= 0) return;
+    const now = Date.now();
+    if (attacker.readyAt > now) {
+      if (side === 'player') flushLogs([`⏳ ${attacker.name} 아직 준비 안 됨`]);
+      return;
+    }
 
     const logs = [];
     let s2 = { ...cur };
+    const cooldownMs = side === 'enemy' ? ATTACK_COOLDOWN_MS_ENEMY : ATTACK_COOLDOWN_MS;
+    const setAttackerCooldown = () => {
+      s2[side] = {
+        ...s2[side],
+        field: s2[side].field.map(c => c.uid === attackerUid ? { ...c, readyAt: now + cooldownMs } : c)
+      };
+    };
+
     if (target === 'face') {
       const dmg = attacker.atk;
       s2[opp] = { ...s2[opp], leaderHp: Math.max(0, s2[opp].leaderHp - dmg) };
       logs.push(`⚔️ ${attacker.name} → 리더 ${dmg} 데미지`);
-      s2[side] = {
-        ...s2[side],
-        field: s2[side].field.map(c => c.uid === attackerUid ? { ...c, canAttack: false } : c)
-      };
+      setAttackerCooldown();
     } else {
       const defender = cur[opp].field.find(c => c.uid === target);
       if (!defender) return;
-      if (defender.stealth) {
-        flushLogs([`👻 ${defender.name}은 은신 중! 공격 불가`]);
+      if (defender.stealthUntil > now) {
+        if (side === 'player') flushLogs([`👻 ${defender.name}은 은신 중!`]);
         return;
       }
-      // 페이저 회피
       if (defender.phaserCharged && Math.random() < 0.5) {
         logs.push(`✨ ${defender.name} 페이저 회피!`);
         s2[opp] = {
           ...s2[opp],
           field: s2[opp].field.map(c => c.uid === defender.uid ? { ...c, phaserCharged: false } : c)
         };
-        s2[side] = {
-          ...s2[side],
-          field: s2[side].field.map(c => c.uid === attackerUid ? { ...c, canAttack: false } : c)
-        };
+        setAttackerCooldown();
         setState(s2);
         flushLogs(logs);
         return;
       }
-      // 타입 상성: 공격자 타입이 방어자 타입을 이기면 +2 데미지
       const advBonus = BEATS[attacker.type] === defender.type ? 2 : 0;
       const disadv = BEATS[defender.type] === attacker.type ? -1 : 0;
       const atkToDef = attacker.atk + advBonus + disadv;
@@ -292,119 +292,116 @@ export default function CardBattle({ user, onBack }) {
       logs.push(`⚔️ ${attacker.name} ↔ ${defender.name}${advBonus ? ' (상성+!)' : disadv ? ' (상성-)' : ''}`);
       s2[side] = {
         ...s2[side],
-        field: s2[side].field.map(c => c.uid === attackerUid ? { ...c, canAttack: false, currentHp: c.currentHp - defToAtk } : c)
+        field: s2[side].field.map(c => c.uid === attackerUid ? { ...c, readyAt: now + cooldownMs, currentHp: c.currentHp - defToAtk } : c)
       };
       s2[opp] = {
         ...s2[opp],
         field: s2[opp].field.map(c => c.uid === defender.uid ? { ...c, currentHp: c.currentHp - atkToDef } : c)
       };
-      // 죽은 카드 정리
       s2.player = { ...s2.player, field: s2.player.field.filter(c => c.currentHp > 0) };
       s2.enemy = { ...s2.enemy, field: s2.enemy.field.filter(c => c.currentHp > 0) };
     }
     setState(s2);
     flushLogs(logs);
-  };
+  }, [flushLogs]);
 
-  // endTurn: 현 턴 종료 효과 적용 → 턴 전환 → 새 턴 셋업 (드로우/마나/공격권)
-  const endTurn = () => {
-    const cur = stateRef.current;
-    if (!cur || cur.gameOver) return;
-    const curSide = cur.turn;
-    const nextSide = curSide === 'player' ? 'enemy' : 'player';
-    const logs = [];
-    let s2 = { ...cur };
-
-    // 1. 턴 끝 효과: heal_per_turn
-    const healAmt = s2[curSide].field.filter(c => c.ability === 'heal_per_turn' && !c.silenced && c.currentHp > 0).length * 2;
-    if (healAmt > 0) {
-      s2[curSide] = { ...s2[curSide], leaderHp: Math.min(LEADER_MAX, s2[curSide].leaderHp + healAmt) };
-      logs.push(`💚 ${curSide === 'player' ? '내' : '적'} 리더 ${healAmt} 회복 (Edaline)`);
-    }
-
-    // 2. 새 턴 시작
-    const newMax = Math.min(MAX_MANA, s2[nextSide].maxMana + 1);
-    const burn = s2[nextSide].burnPerTurn || 0;
-    s2[nextSide] = {
-      ...s2[nextSide],
-      leaderHp: Math.max(0, s2[nextSide].leaderHp - burn),
-      maxMana: newMax,
-      mana: newMax,
-      field: s2[nextSide].field.map(c => ({ ...c, canAttack: true, stealth: false }))
-    };
-    if (burn > 0) logs.push(`☠️ ${nextSide === 'player' ? '내' : '적'} 리더가 인플릭트로 ${burn} 데미지`);
-
-    // 3. 드로우
-    if (s2[nextSide].deck.length > 0 && s2[nextSide].hand.length < HAND_MAX) {
-      const [drawn, ...rest] = s2[nextSide].deck;
-      s2[nextSide] = { ...s2[nextSide], deck: rest, hand: [...s2[nextSide].hand, drawn] };
-    }
-
-    setState({ ...s2, turn: nextSide, turnCount: cur.turnCount + 1 });
-    flushLogs(logs);
-  };
-
-  // 적 턴 자동 진행
+  // ===== 실시간 틱: 마나 충전, 드로우, 강제 리렌더 =====
   useEffect(() => {
     if (!state || state.gameOver) return;
-    if (state.turn !== 'enemy') return;
-    if (aiTurnLockRef.current) return;
-    aiTurnLockRef.current = true;
+    const interval = setInterval(() => {
+      const cur = stateRef.current;
+      if (!cur || cur.gameOver) return;
+      const now = Date.now();
+      let s2 = { ...cur };
+      let changed = false;
 
-    const runAiTurn = async () => {
-      // AI: 최대한 카드 내고, 공격할 수 있는 거 다 공격
-      await new Promise(r => setTimeout(r, 800));
-
-      // 카드 내기 (가장 비싼 것부터)
-      let safety = 0;
-      while (safety++ < 10) {
-        const cur = stateRef.current;
-        if (!cur || cur.turn !== 'enemy' || cur.gameOver) break;
-        const playable = cur.enemy.hand
-          .filter(c => c.cost <= cur.enemy.mana)
-          .sort((a, b) => b.cost - a.cost);
-        if (playable.length === 0 || cur.enemy.field.length >= FIELD_MAX) break;
-        playCardFromHand('enemy', playable[0].uid);
-        await new Promise(r => setTimeout(r, 700));
+      // 플레이어 마나 충전 (1초/마나)
+      const pManaElapsed = now - s2.lastManaTickAtPlayer;
+      if (pManaElapsed >= MANA_TICK_MS_PLAYER) {
+        const inc = Math.floor(pManaElapsed / MANA_TICK_MS_PLAYER);
+        s2 = {
+          ...s2,
+          lastManaTickAtPlayer: s2.lastManaTickAtPlayer + inc * MANA_TICK_MS_PLAYER,
+          player: { ...s2.player, mana: Math.min(MAX_MANA, s2.player.mana + inc) }
+        };
+        changed = true;
+      }
+      // 적 마나 충전 (2초/마나 — 절반 속도)
+      const eManaElapsed = now - s2.lastManaTickAtEnemy;
+      if (eManaElapsed >= MANA_TICK_MS_ENEMY) {
+        const inc = Math.floor(eManaElapsed / MANA_TICK_MS_ENEMY);
+        s2 = {
+          ...s2,
+          lastManaTickAtEnemy: s2.lastManaTickAtEnemy + inc * MANA_TICK_MS_ENEMY,
+          enemy: { ...s2.enemy, mana: Math.min(MAX_MANA, s2.enemy.mana + inc) }
+        };
+        changed = true;
       }
 
-      // 공격
-      safety = 0;
-      while (safety++ < 10) {
-        const cur = stateRef.current;
-        if (!cur || cur.turn !== 'enemy' || cur.gameOver) break;
-        const attackers = cur.enemy.field.filter(c => c.canAttack && c.currentHp > 0);
-        if (attackers.length === 0) break;
+      // 드로우 충전
+      const drawElapsed = now - s2.lastDrawTickAt;
+      if (drawElapsed >= DRAW_TICK_MS) {
+        const inc = Math.floor(drawElapsed / DRAW_TICK_MS);
+        let pDeck = [...s2.player.deck], pHand = [...s2.player.hand];
+        let eDeck = [...s2.enemy.deck], eHand = [...s2.enemy.hand];
+        for (let i = 0; i < inc; i++) {
+          if (pDeck.length > 0 && pHand.length < HAND_MAX) { pHand.push(pDeck.shift()); }
+          if (eDeck.length > 0 && eHand.length < HAND_MAX) { eHand.push(eDeck.shift()); }
+        }
+        s2 = {
+          ...s2,
+          lastDrawTickAt: s2.lastDrawTickAt + inc * DRAW_TICK_MS,
+          player: { ...s2.player, deck: pDeck, hand: pHand },
+          enemy: { ...s2.enemy, deck: eDeck, hand: eHand }
+        };
+        changed = true;
+      }
 
-        const attacker = attackers[0];
-        const targets = cur.player.field.filter(c => !c.stealth && c.currentHp > 0);
-        // 우선: 상성 우위 카드, 없으면 face 직접 공격
+      if (changed) setState(s2);
+      setTick(t => t + 1); // 쿨다운 진행 표시용
+    }, 200);
+    return () => clearInterval(interval);
+  }, [state?.gameOver, state?.startTime]); // eslint-disable-line
+
+  // ===== AI 루프 =====
+  useEffect(() => {
+    if (!state || state.gameOver) return;
+    const interval = setInterval(() => {
+      const cur = stateRef.current;
+      if (!cur || cur.gameOver) return;
+      const e = cur.enemy;
+
+      // 1. 카드 내기 — 필드에 2장 이상이면 잘 안 추가 (25% 확률), 1장 이하면 50%
+      const playChance = e.field.length >= 2 ? 0.15 : 0.4;
+      if (e.field.length < FIELD_MAX && Math.random() < playChance) {
+        const playable = e.hand.filter(c => c.cost <= e.mana);
+        if (playable.length > 0) {
+          const pick = playable[Math.floor(Math.random() * playable.length)];
+          playCardFromHand('enemy', pick.uid);
+          return;
+        }
+      }
+
+      // 2. 공격 — 50% 확률 (천천히 공격)
+      const now = Date.now();
+      const ready = e.field.filter(c => c.readyAt <= now && c.currentHp > 0);
+      if (ready.length > 0 && Math.random() < 0.5) {
+        const attacker = ready[Math.floor(Math.random() * ready.length)];
+        const targets = cur.player.field.filter(c => c.stealthUntil <= now && c.currentHp > 0);
         let target;
-        const advTargets = targets.filter(d => BEATS[attacker.type] === d.type);
-        if (advTargets.length > 0) {
-          target = advTargets[0].uid;
-        } else if (targets.length > 0 && cur.player.leaderHp > attacker.atk * 2) {
-          target = targets[0].uid;
-        } else {
+        // 50% face, 50% 카드 (덜 face 직격)
+        if (targets.length === 0 || Math.random() < 0.5) {
           target = 'face';
+        } else {
+          target = targets[Math.floor(Math.random() * targets.length)].uid;
         }
         performAttack('enemy', attacker.uid, target);
-        await new Promise(r => setTimeout(r, 600));
       }
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [state?.gameOver, state?.startTime, playCardFromHand, performAttack]); // eslint-disable-line
 
-      await new Promise(r => setTimeout(r, 400));
-      endTurn();
-      aiTurnLockRef.current = false;
-    };
-    runAiTurn();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.turn]);
-
-  // state 최신값 ref
-  const stateRef = useRef(state);
-  useEffect(() => { stateRef.current = state; }, [state]);
-
-  // 게임 종료 체크
+  // ===== 게임 종료 체크 =====
   useEffect(() => {
     if (!state || state.gameOver) return;
     if (state.player.leaderHp <= 0 && state.enemy.leaderHp <= 0) {
@@ -416,7 +413,6 @@ export default function CardBattle({ user, onBack }) {
     }
   }, [state?.player?.leaderHp, state?.enemy?.leaderHp]); // eslint-disable-line
 
-  // 결과 화면으로 자동 전환
   useEffect(() => {
     if (state?.gameOver) {
       const result = state.gameOver;
@@ -428,32 +424,28 @@ export default function CardBattle({ user, onBack }) {
 
   // ===== 사용자 액션 =====
   const onClickHandCard = (cardUid) => {
-    if (!state || state.turn !== 'player' || state.gameOver) return;
+    if (!state || state.gameOver) return;
     playCardFromHand('player', cardUid);
   };
-
   const onClickFieldCard = (cardUid, side) => {
-    if (!state || state.turn !== 'player' || state.gameOver) return;
+    if (!state || state.gameOver) return;
     if (side === 'player') {
-      // 내 필드 카드 클릭 = 공격자 선택 (또는 토글)
+      const now = Date.now();
       const card = state.player.field.find(c => c.uid === cardUid);
-      if (!card || !card.canAttack) return;
-      if (pendingTarget?.attackerUid === cardUid) {
-        setPendingTarget(null);
-      } else {
-        setPendingTarget({ attackerUid: cardUid });
+      if (!card || card.readyAt > now) {
+        if (card) flushLogs([`⏳ ${card.name} ${Math.ceil((card.readyAt - now)/100)/10}초 대기`]);
+        return;
       }
+      if (pendingTarget?.attackerUid === cardUid) setPendingTarget(null);
+      else setPendingTarget({ attackerUid: cardUid });
     } else {
-      // 적 필드 카드 클릭 = 공격 대상
       if (!pendingTarget) return;
       performAttack('player', pendingTarget.attackerUid, cardUid);
       setPendingTarget(null);
     }
   };
-
   const onClickEnemyFace = () => {
-    if (!state || state.turn !== 'player' || state.gameOver) return;
-    if (!pendingTarget) return;
+    if (!state || state.gameOver || !pendingTarget) return;
     performAttack('player', pendingTarget.attackerUid, 'face');
     setPendingTarget(null);
   };
@@ -464,12 +456,18 @@ export default function CardBattle({ user, onBack }) {
       <div className="cb-screen">
         <div className="cb-header">
           <button className="back-btn" onClick={onBack}>←</button>
-          <h2>⚔️ 잃도수 카드 배틀</h2>
+          <h2>⚔️ 잃도수 카드 배틀 (실시간)</h2>
         </div>
         <div className="cb-intro">
-          <p className="cb-intro-line">진영을 골라 카드 배틀!</p>
-          <p className="cb-intro-line cb-faint">리더 30 HP · 마나 시스템 · 특수 능력 · 타입 상성</p>
-          <p className="cb-intro-line cb-faint">🔥불 → 🌿자연 → 💧물 → 🧠정신 → 🔥</p>
+          <p className="cb-intro-line">진영을 골라 실시간 카드 배틀!</p>
+          <div className="cb-howto">
+            <p>🕒 <b>마나는 1초마다 1씩 자동 충전</b> (최대 10)</p>
+            <p>🎴 손의 카드 클릭 → 필드에 등장 (마나만 충분하면 OK)</p>
+            <p>⏳ 등장한 카드는 1.5초 후 공격 가능 (노랗게 빛남)</p>
+            <p>⚔️ 내 필드 카드 클릭 → 적 카드 또는 적 리더 클릭</p>
+            <p>❤️ 적 리더 HP 0으로 만들면 승리!</p>
+            <p className="cb-faint">🔥불 → 🌿자연 → 💧물 → 🧠정신 → 🔥 (상성: +2 데미지)</p>
+          </div>
         </div>
         <div className="cb-faction-row">
           {Object.entries(FACTION_INFO).map(([key, info]) => (
@@ -514,36 +512,43 @@ export default function CardBattle({ user, onBack }) {
 
   if (!state) return null;
 
-  // ===== 배틀 화면 =====
+  const now = Date.now();
+  const playerHpPct = (state.player.leaderHp / state.player.leaderHpMax) * 100;
+  const enemyHpPct = (state.enemy.leaderHp / state.enemy.leaderHpMax) * 100;
+
   return (
     <div className="cb-screen cb-battle-bg">
       <div className="cb-header">
         <button className="back-btn" onClick={onBack}>←</button>
-        <h2>Turn {state.turnCount} · {state.turn === 'player' ? '내 차례' : '적 차례'}</h2>
+        <h2>⚔️ 실시간 배틀</h2>
         <span className="cb-faction-tag" style={{ color: FACTION_INFO[faction].color }}>
           {FACTION_INFO[faction].emoji}
         </span>
       </div>
 
       {/* 적 리더 */}
-      <div className="cb-leader cb-leader-enemy" onClick={onClickEnemyFace}>
+      <div className={`cb-leader cb-leader-enemy ${pendingTarget ? 'cb-targetable-face' : ''}`} onClick={onClickEnemyFace}>
         <div className="cb-leader-info">
           <span className="cb-leader-emoji">{FACTION_INFO[faction === 'blackswan' ? 'neverseen' : 'blackswan'].emoji}</span>
           <span className="cb-leader-name">적 리더</span>
         </div>
-        <div className="cb-leader-stats">
-          <span className="cb-leader-hp">❤️ {state.enemy.leaderHp}/{LEADER_MAX}</span>
-          <span className="cb-leader-mana">💎 {state.enemy.mana}/{state.enemy.maxMana}</span>
-          <span className="cb-leader-deck">🃏 {state.enemy.deck.length}/{state.enemy.hand.length}</span>
+        <div className="cb-leader-bars">
+          <div className="cb-hp-bar">
+            <div className="cb-hp-fill cb-hp-fill-enemy" style={{ width: `${enemyHpPct}%` }} />
+            <span className="cb-hp-text">❤️ {state.enemy.leaderHp}/{state.enemy.leaderHpMax}</span>
+          </div>
+          <div className="cb-mana-bar">
+            <div className="cb-mana-fill" style={{ width: `${(state.enemy.mana / MAX_MANA) * 100}%` }} />
+            <span className="cb-mana-text">💎 {state.enemy.mana}/{MAX_MANA}</span>
+          </div>
         </div>
-        {pendingTarget && <span className="cb-target-badge">🎯 클릭해 공격</span>}
+        {pendingTarget && <span className="cb-target-badge">🎯 클릭!</span>}
       </div>
 
       {/* 적 손 (개수만) */}
       <div className="cb-row cb-hand-enemy">
-        {state.enemy.hand.map((c, i) => (
-          <div key={i} className="cb-card cb-card-back-mini" />
-        ))}
+        {state.enemy.hand.map((_, i) => <div key={i} className="cb-card-back-mini" />)}
+        <span className="cb-hand-count">🃏 {state.enemy.deck.length}</span>
       </div>
 
       {/* 적 필드 */}
@@ -553,14 +558,13 @@ export default function CardBattle({ user, onBack }) {
           <CardView
             key={c.uid}
             card={c}
+            now={now}
             onClick={() => onClickFieldCard(c.uid, 'enemy')}
-            interactive={!!pendingTarget && !c.stealth}
-            targetable={!!pendingTarget && !c.stealth}
+            targetable={!!pendingTarget && c.stealthUntil <= now}
           />
         ))}
       </div>
 
-      {/* 가운데 구분선 + 로그 */}
       <div className="cb-mid">
         <div className="cb-log">
           {log.slice(-3).map(l => <div key={l.id} className="cb-log-line">{l.text}</div>)}
@@ -569,15 +573,16 @@ export default function CardBattle({ user, onBack }) {
 
       {/* 내 필드 */}
       <div className="cb-field cb-field-player">
-        {state.player.field.length === 0 && <div className="cb-field-empty">내 필드 비어있음 — 카드를 내세요</div>}
+        {state.player.field.length === 0 && <div className="cb-field-empty">내 필드 비어있음 — 손의 카드 클릭해서 등장!</div>}
         {state.player.field.map(c => (
           <CardView
             key={c.uid}
             card={c}
+            now={now}
             highlight={pendingTarget?.attackerUid === c.uid}
             onClick={() => onClickFieldCard(c.uid, 'player')}
-            interactive={state.turn === 'player' && c.canAttack}
-            readyToAttack={c.canAttack && state.turn === 'player'}
+            ready={c.readyAt <= now}
+            isMine
           />
         ))}
       </div>
@@ -588,14 +593,17 @@ export default function CardBattle({ user, onBack }) {
           <span className="cb-leader-emoji">{FACTION_INFO[faction].emoji}</span>
           <span className="cb-leader-name">{user.nickname}</span>
         </div>
-        <div className="cb-leader-stats">
-          <span className="cb-leader-hp">❤️ {state.player.leaderHp}/{LEADER_MAX}</span>
-          <span className="cb-leader-mana">💎 {state.player.mana}/{state.player.maxMana}</span>
-          <span className="cb-leader-deck">🃏 {state.player.deck.length}</span>
+        <div className="cb-leader-bars">
+          <div className="cb-hp-bar">
+            <div className="cb-hp-fill cb-hp-fill-player" style={{ width: `${playerHpPct}%` }} />
+            <span className="cb-hp-text">❤️ {state.player.leaderHp}/{state.player.leaderHpMax}</span>
+          </div>
+          <div className="cb-mana-bar">
+            <div className="cb-mana-fill" style={{ width: `${(state.player.mana / MAX_MANA) * 100}%` }} />
+            <span className="cb-mana-text">💎 {state.player.mana}/{MAX_MANA}</span>
+          </div>
         </div>
-        {state.turn === 'player' && !state.gameOver && (
-          <button className="cb-end-turn" onClick={endTurn}>End Turn ▶</button>
-        )}
+        <span className="cb-leader-deck">🃏 {state.player.deck.length}</span>
       </div>
 
       {/* 내 손 */}
@@ -604,10 +612,10 @@ export default function CardBattle({ user, onBack }) {
           <CardView
             key={c.uid}
             card={c}
+            now={now}
             isInHand
-            playable={state.turn === 'player' && state.player.mana >= c.cost && state.player.field.length < FIELD_MAX}
+            playable={state.player.mana >= c.cost && state.player.field.length < FIELD_MAX}
             onClick={() => onClickHandCard(c.uid)}
-            interactive={state.turn === 'player' && state.player.mana >= c.cost && state.player.field.length < FIELD_MAX}
           />
         ))}
       </div>
@@ -616,20 +624,24 @@ export default function CardBattle({ user, onBack }) {
 }
 
 // ===== 카드 뷰 =====
-function CardView({ card, highlight, dimmed, onClick, interactive, isInHand, playable, readyToAttack, targetable }) {
+function CardView({ card, now, highlight, onClick, isInHand, playable, ready, targetable, isMine }) {
   const t = TYPES[card.type];
   const hpPct = (card.currentHp / card.hp) * 100;
+  const inCooldown = !isInHand && card.readyAt > now;
+  const cooldownPct = inCooldown
+    ? Math.min(100, 100 * (1 - (card.readyAt - now) / (ATTACK_COOLDOWN_MS)))
+    : 100;
+  const stealthActive = card.stealthUntil > now;
   const cls = [
     'cb-card',
     isInHand ? 'cb-card-hand' : 'cb-card-field',
     highlight ? 'cb-highlight' : '',
-    dimmed ? 'cb-dimmed' : '',
-    interactive ? 'cb-interactive' : '',
     isInHand && playable ? 'cb-playable' : '',
     isInHand && !playable ? 'cb-unplayable' : '',
-    readyToAttack ? 'cb-ready' : '',
+    !isInHand && ready ? 'cb-ready' : '',
+    !isInHand && inCooldown ? 'cb-cooldown' : '',
     targetable ? 'cb-targetable' : '',
-    card.stealth ? 'cb-stealth' : '',
+    stealthActive ? 'cb-stealth' : '',
     card.silenced ? 'cb-silenced' : ''
   ].filter(Boolean).join(' ');
 
@@ -649,8 +661,13 @@ function CardView({ card, highlight, dimmed, onClick, interactive, isInHand, pla
             ❤️ {card.currentHp}/{card.hp}
           </span>
         </div>
+        {inCooldown && (
+          <div className="cb-cooldown-overlay">
+            <div className="cb-cooldown-bar" style={{ width: `${cooldownPct}%` }} />
+          </div>
+        )}
       </div>
-      {card.stealth && <div className="cb-badge cb-badge-stealth">👻 은신</div>}
+      {stealthActive && <div className="cb-badge cb-badge-stealth">👻 은신</div>}
       {card.silenced && <div className="cb-badge cb-badge-silenced">🤫 침묵</div>}
     </div>
   );
