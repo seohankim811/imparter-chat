@@ -289,9 +289,14 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       setRoomUsers(users);
     });
 
-    socket.on('room-owner', (ownerNickname) => {
-      setOwnerId(ownerNickname);
-      setIsOwner(ownerNickname === user.nickname);
+    socket.on('room-owner', (payload) => {
+      // 기존: 문자열만 / 신규: { ownerNickname, isOwner }
+      const ownerNick = typeof payload === 'string' ? payload : payload?.ownerNickname || null;
+      const canManage = typeof payload === 'object' && payload !== null && payload.isOwner !== undefined
+        ? !!payload.isOwner
+        : ownerNick === user.nickname;
+      setOwnerId(ownerNick);
+      setIsOwner(canManage);
     });
 
     socket.on('kicked', ({ roomName: kickedRoom }) => {

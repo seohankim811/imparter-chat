@@ -48,8 +48,16 @@ const rooms = new Map();
 const users = new Map();
 const profiles = new Map(); // nickname -> { xp, level, badges, messageCount }
 
-// 관리자 닉네임 — 모든 배지/레벨 자동 부여
+// 관리자 닉네임 — 모든 배지/레벨 자동 부여 + 모든 방의 방장 권한
 const ADMIN_NICKNAMES = new Set(['서한']);
+
+function isAdmin(nickname) {
+  return !!nickname && ADMIN_NICKNAMES.has(nickname);
+}
+function canManageRoom(nickname, room) {
+  if (!room || !nickname) return false;
+  return room.ownerNickname === nickname || isAdmin(nickname);
+}
 
 // ===== 레벨/배지 시스템 =====
 const BADGES = {
@@ -1262,7 +1270,10 @@ io.on('connection', (socket) => {
 
     const userList = Array.from(room.users).map(id => users.get(id)).filter(Boolean);
     io.to(fullName).emit('room-users', userList);
-    socket.emit('room-owner', room.ownerNickname || null);
+    socket.emit('room-owner', {
+      ownerNickname: room.ownerNickname || null,
+      isOwner: canManageRoom(user?.nickname, room)
+    });
   });
 
   socket.on('leave-room', (roomName) => {
@@ -1294,8 +1305,8 @@ io.on('connection', (socket) => {
     const room = rooms.get(fullName);
     if (!room) return;
 
-    // 방장만 삭제 가능
-    if (room.ownerNickname !== user.nickname) {
+    // 방장(또는 관리자)만 삭제 가능
+    if (!canManageRoom(user.nickname, room)) {
       socket.emit('room-delete-error', { message: '방장만 방을 삭제할 수 있어요!' });
       return;
     }
@@ -1330,7 +1341,7 @@ io.on('connection', (socket) => {
     const fullName = fullRoomKey(actualMode, roomName);
     const room = rooms.get(fullName);
     const kicker = users.get(socket.id);
-    if (!room || !kicker || room.ownerNickname !== kicker.nickname) return;
+    if (!room || !kicker || !canManageRoom(kicker.nickname, room)) return;
 
     const targetUser = users.get(targetId);
     const targetSocket = io.sockets.sockets.get(targetId);
@@ -1642,7 +1653,7 @@ io.on('connection', (socket) => {
     const fullName = fullRoomKey(actualMode, roomName);
     const room = rooms.get(fullName);
     if (!user || !room) return;
-    if (room.ownerNickname !== user.nickname) return;
+    if (!canManageRoom(user.nickname, room)) return;
     if (password) roomPasswords.set(fullName, password);
     else roomPasswords.delete(fullName);
     savePasswords();
