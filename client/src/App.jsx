@@ -61,7 +61,14 @@ export default function App() {
         const iconValid = parsedUser?.icon && modeIcons.some(i => i.id === parsedUser.icon.id);
         if (parsedUser && parsedUser.nickname && iconValid) {
           setUser(parsedUser);
-          socket.emit('set-user', { nickname: parsedUser.nickname, icon: parsedUser.icon });
+          // 🛡️ 관리자 재접속 시 sessionStorage의 키 함께 전송
+          let storedKey;
+          try { storedKey = sessionStorage.getItem('imparter-admin-key'); } catch (_) {}
+          socket.emit('set-user', {
+            nickname: parsedUser.nickname,
+            icon: parsedUser.icon,
+            adminSecret: storedKey || undefined
+          });
           if (savedRoom) {
             setCurrentRoom(savedRoom);
           }
@@ -77,6 +84,24 @@ export default function App() {
     }
     setLoaded(true);
   }, []);
+
+  // 🛡️ 자동 재접속 인증 실패 시 강제 로그아웃 (Login 화면에서는 Login.jsx가 처리)
+  useEffect(() => {
+    if (!user) return; // 이미 로그인 화면이면 Login.jsx가 처리하므로 무시
+    const onLoginError = (e) => {
+      if (e?.code === 'EMPTY_NICK' || e?.code === 'TOO_LONG') return;
+      try { sessionStorage.removeItem('imparter-admin-key'); } catch (_) {}
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(ROOM_KEY);
+      setUser(null);
+      setCurrentRoom(null);
+      if (e?.message) {
+        setTimeout(() => alert(`⚠️ ${e.message}`), 50);
+      }
+    };
+    socket.on('login-error', onLoginError);
+    return () => socket.off('login-error', onLoginError);
+  }, [user]);
 
   const handleLogin = useCallback((userData) => {
     setUser(userData);

@@ -48,11 +48,97 @@ const rooms = new Map();
 const users = new Map();
 const profiles = new Map(); // nickname -> { xp, level, badges, messageCount }
 
-// 관리자 닉네임 — 모든 배지/레벨 자동 부여 + 모든 방의 방장 권한
+// 관리자 닉네임 — 모든 배지/레벨 자동 부여 + 모든 방의 방장 권한 (시크릿 키 필요)
 const ADMIN_NICKNAMES = new Set(['서한']);
 
+// VIP 닉네임 — 모든 배지/레벨 자동 부여만 (방장 권한 X, 시크릿 키 불필요)
+// 닉네임이 정확히 일치할 때만 적용 — 추가 인증은 없으니 가족/지인 정도만
+const VIP_NICKNAMES = new Set(['Daddy', 'cindy']);
+
+// ===== 🛡️ 해킹 방지 시스템 =====
+// 관리자 비밀 키 (환경변수 ADMIN_SECRET)
+// Render 대시보드 → Environment 탭 → ADMIN_SECRET 등록
+const ADMIN_SECRET = process.env.ADMIN_SECRET || null;
+if (!ADMIN_SECRET) {
+  console.warn('⚠️ ADMIN_SECRET 환경변수가 설정되지 않았어요. 관리자 닉네임 사용 불가.');
+}
+
+// 현재 인증된 관리자 소켓 (서버 메모리 - 클라이언트가 위조 불가)
+const verifiedAdmins = new Set();
+
+// 관리자 키 시도 추적 (IP 단위 무차별 대입 차단)
+const adminAttempts = new Map(); // ip -> { failCount, lockedUntil }
+const ADMIN_MAX_FAILS = 5;
+const ADMIN_LOCK_MS = 30 * 60 * 1000; // 30분
+
+// 메시지 도배 차단
+const messageRateLimit = new Map(); // socket.id -> [timestamps]
+const MSG_MAX_PER_WINDOW = 5; // 1초에 최대 5개
+const MSG_WINDOW_MS = 1000;
+
+function getClientIp(socket) {
+  const fwd = socket.handshake.headers['x-forwarded-for'];
+  if (fwd) return String(fwd).split(',')[0].trim();
+  return socket.handshake.address || 'unknown';
+}
+
+// 닉네임 정규화 — '서 한', '서한1', '서한 ' 같은 변형 잡기
+function normalizeNickname(nick) {
+  if (!nick) return '';
+  return String(nick)
+    .replace(/\s+/g, '')
+    .replace(/[._\-~`!@#$%^&*()+=|\\/<>?,"';:\[\]{}]/g, '')
+    .replace(/\d+/g, '')
+    .toLowerCase();
+}
+const ADMIN_NORMALIZED = new Set([...ADMIN_NICKNAMES].map(normalizeNickname));
+function isReservedNickname(nick) {
+  if (!nick) return false;
+  if (ADMIN_NICKNAMES.has(nick)) return true;
+  const n = normalizeNickname(nick);
+  return n.length > 0 && ADMIN_NORMALIZED.has(n);
+}
+
+function checkMessageRate(socketId) {
+  const now = Date.now();
+  let stamps = messageRateLimit.get(socketId) || [];
+  stamps = stamps.filter(t => now - t < MSG_WINDOW_MS);
+  if (stamps.length >= MSG_MAX_PER_WINDOW) {
+    messageRateLimit.set(socketId, stamps);
+    return false;
+  }
+  stamps.push(now);
+  messageRateLimit.set(socketId, stamps);
+  return true;
+}
+
+// XSS 기본 차단 — script/iframe/이벤트핸들러/javascript: 제거
+function sanitizeText(text) {
+  if (typeof text !== 'string') return '';
+  return text
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<\s*\/?\s*(script|iframe|object|embed)\b[^>]*>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/data:text\/html/gi, '')
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, '');
+}
+
+function isVerifiedAdminSocket(socketId) {
+  return verifiedAdmins.has(socketId);
+}
+
 function isAdmin(nickname) {
-  return !!nickname && ADMIN_NICKNAMES.has(nickname);
+  // 닉네임 자체가 관리자 + 그 닉네임을 가진 검증된 소켓이 존재해야만 true
+  // (set-user에서 검증 없이는 admin 닉네임을 등록 못 하므로 사실상 안전)
+  if (!nickname || !ADMIN_NICKNAMES.has(nickname)) return false;
+  for (const id of verifiedAdmins) {
+    const u = users.get(id);
+    if (u && u.nickname === nickname) return true;
+  }
+  return false;
 }
 function canManageRoom(nickname, room) {
   if (!room || !nickname) return false;
@@ -90,7 +176,8 @@ function getProfile(nickname) {
     });
   }
   const profile = profiles.get(nickname);
-  if (ADMIN_NICKNAMES.has(nickname)) {
+  // 관리자(서한) 또는 VIP(Daddy/cindy)는 모든 배지 + Lv.99 자동
+  if (ADMIN_NICKNAMES.has(nickname) || VIP_NICKNAMES.has(nickname)) {
     const allBadges = Object.keys(BADGES);
     let changed = false;
     for (const b of allBadges) {
@@ -1189,9 +1276,71 @@ io.on('connection', (socket) => {
   // 소켓별 현재 모드 저장
   socket.data = socket.data || { mode: 'canva' };
 
-  socket.on('set-user', ({ nickname, icon, mode }) => {
-    users.set(socket.id, { nickname, icon, id: socket.id });
+  socket.on('set-user', ({ nickname, icon, mode, adminSecret }) => {
+    const cleanNick = typeof nickname === 'string' ? nickname.trim() : '';
+    if (!cleanNick) {
+      socket.emit('login-error', { code: 'EMPTY_NICK', message: '닉네임을 입력하세요' });
+      return;
+    }
+    if (cleanNick.length > 20) {
+      socket.emit('login-error', { code: 'TOO_LONG', message: '닉네임은 20자 이하' });
+      return;
+    }
+
+    // 관리자 닉네임 또는 유사 변형 차단
+    if (isReservedNickname(cleanNick)) {
+      const ip = getClientIp(socket);
+      const now = Date.now();
+      const attempt = adminAttempts.get(ip) || { failCount: 0, lockedUntil: 0 };
+
+      if (attempt.lockedUntil > now) {
+        const minutesLeft = Math.ceil((attempt.lockedUntil - now) / 60000);
+        socket.emit('login-error', {
+          code: 'LOCKED',
+          message: `너무 많이 시도했어요. ${minutesLeft}분 뒤 다시 시도하세요.`
+        });
+        return;
+      }
+
+      if (!ADMIN_SECRET) {
+        socket.emit('login-error', {
+          code: 'ADMIN_NOT_CONFIGURED',
+          message: '이 닉네임은 사용할 수 없습니다'
+        });
+        return;
+      }
+
+      if (typeof adminSecret !== 'string' || adminSecret.length === 0 || adminSecret !== ADMIN_SECRET) {
+        attempt.failCount += 1;
+        if (attempt.failCount >= ADMIN_MAX_FAILS) {
+          attempt.lockedUntil = now + ADMIN_LOCK_MS;
+          attempt.failCount = 0;
+          console.warn(`🚨 관리자 키 ${ADMIN_MAX_FAILS}회 실패 → ${ip} 30분 차단`);
+        }
+        adminAttempts.set(ip, attempt);
+        socket.emit('login-error', {
+          code: 'WRONG_SECRET',
+          message: adminSecret ? '관리자 키가 틀렸어요' : '이 닉네임에는 관리자 키가 필요해요'
+        });
+        return;
+      }
+
+      // 인증 성공
+      adminAttempts.delete(ip);
+      verifiedAdmins.add(socket.id);
+      // 닉네임은 정식 관리자 닉네임으로 보정
+      const canonicalNick = [...ADMIN_NICKNAMES].find(a => normalizeNickname(a) === normalizeNickname(cleanNick)) || cleanNick;
+      users.set(socket.id, { nickname: canonicalNick, icon, id: socket.id });
+      if (mode) socket.data.mode = mode;
+      socket.emit('login-success', { isAdmin: true, nickname: canonicalNick });
+      console.log(`✅ 관리자 인증 성공: ${canonicalNick} (IP: ${ip})`);
+      return;
+    }
+
+    // 일반 사용자
+    users.set(socket.id, { nickname: cleanNick, icon, id: socket.id });
     if (mode) socket.data.mode = mode;
+    socket.emit('login-success', { isAdmin: false, nickname: cleanNick });
   });
 
   socket.on('get-rooms', (options = {}) => {
@@ -1369,10 +1518,26 @@ io.on('connection', (socket) => {
   socket.on('send-message', ({ roomName, text, replyTo, image, sticker, video, audio, audioDuration, mode }) => {
     const user = users.get(socket.id);
     if (!user) return;
+
+    // 🛡️ 도배 방지 — 1초에 5개 초과 차단 (관리자도 동일 적용)
+    if (!checkMessageRate(socket.id)) {
+      socket.emit('system-message', {
+        text: '⚠️ 너무 빨리 보내고 있어요. 잠시 후 다시 시도하세요.',
+        timestamp: Date.now()
+      });
+      return;
+    }
+
     const actualMode = mode || socket.data.mode || 'canva';
     const fullName = fullRoomKey(actualMode, roomName);
     let trimmedText = typeof text === 'string' ? text.trim() : '';
     if (!trimmedText && !image && !sticker && !video && !audio) return;
+
+    // 🛡️ XSS 방어 — 위험한 HTML/스크립트 제거
+    trimmedText = sanitizeText(trimmedText);
+
+    // 텍스트 길이 제한 (DoS 방어)
+    if (trimmedText.length > 2000) trimmedText = trimmedText.slice(0, 2000);
 
     // 욕설 필터 적용 (봇 명령어 제외)
     let censorWarning = false;
@@ -1566,7 +1731,10 @@ io.on('connection', (socket) => {
     const message = room.messages.find(m => m.id === messageId);
     if (!message || message.nickname !== user.nickname || message.deleted) return;
 
-    message.text = newText.trim();
+    // 🛡️ XSS 방어 + 길이 제한
+    let cleaned = sanitizeText(newText.trim());
+    if (cleaned.length > 2000) cleaned = cleaned.slice(0, 2000);
+    message.text = cleaned;
     message.edited = true;
     saveRooms();
     io.to(fullName).emit('message-updated', message);
@@ -1737,6 +1905,9 @@ io.on('connection', (socket) => {
       }
     }
     users.delete(socket.id);
+    // 🛡️ 인증 상태/도배 카운터 정리
+    verifiedAdmins.delete(socket.id);
+    messageRateLimit.delete(socket.id);
   });
 });
 
