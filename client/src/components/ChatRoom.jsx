@@ -199,12 +199,14 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   const [showCommands, setShowCommands] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
+  const [filePreview, setFilePreview] = useState(null); // { name, size, type, data }
   const [myProfile, setMyProfile] = useState(null);
   const [partyTrigger, setPartyTrigger] = useState(0);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
+  const attachInputRef = useRef(null);
   const isFirstLoad = useRef(true);
 
   const scrollToBottom = () => {
@@ -380,9 +382,9 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       return;
     }
 
-    if (!input.trim() && !imagePreview) return;
+    if (!input.trim() && !imagePreview && !filePreview) return;
 
-    const replyText = replyingTo?.text || (replyingTo?.image ? '📷 사진' : replyingTo?.video ? '🎥 비디오' : '');
+    const replyText = replyingTo?.text || (replyingTo?.image ? '📷 사진' : replyingTo?.video ? '🎥 비디오' : replyingTo?.file ? `📎 ${replyingTo.file.name}` : '');
     const replyData = replyingTo ? {
       id: replyingTo.id,
       nickname: replyingTo.nickname,
@@ -397,13 +399,43 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       replyTo: replyData,
       image: isVideo ? null : (imagePreview?.data || imagePreview),
       video: isVideo ? imagePreview.data : null,
+      file: filePreview || null,
       mode: getMode()
     });
     socket.emit('typing', { roomName, isTyping: false });
     setInput('');
     setReplyingTo(null);
     setImagePreview(null);
+    setFilePreview(null);
     clearTimeout(typingTimeoutRef.current);
+  };
+
+  const handleFileAttach = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('파일은 10MB 이하만 보낼 수 있어요.');
+      e.target.value = '';
+      return;
+    }
+    // 실행 파일 차단 (클라이언트 1차)
+    if (/\.(exe|bat|cmd|sh|app|dmg|msi|com|vbs|ps1|jar|scr|pif)$/i.test(file.name)) {
+      alert('실행 파일은 보낼 수 없어요.');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setFilePreview({
+        name: file.name,
+        size: file.size,
+        type: file.type || 'application/octet-stream',
+        data: ev.target.result
+      });
+    };
+    reader.onerror = () => alert('파일 읽기 실패');
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handleImageSelect = async (e) => {
@@ -782,6 +814,21 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
         </div>
       )}
 
+      {filePreview && (
+        <div className="image-preview-bar file-preview-bar">
+          <div className="file-preview-icon">📎</div>
+          <div className="file-preview-info">
+            <div className="file-preview-name">{filePreview.name}</div>
+            <div className="file-preview-size">
+              {filePreview.size < 1024 ? `${filePreview.size}B`
+                : filePreview.size < 1024*1024 ? `${(filePreview.size/1024).toFixed(1)}KB`
+                : `${(filePreview.size/1024/1024).toFixed(2)}MB`}
+            </div>
+          </div>
+          <button className="image-preview-close" onClick={() => setFilePreview(null)}>✕</button>
+        </div>
+      )}
+
       {showVoiceRecorder && (
         <VoiceRecorder
           onSend={handleVoiceSend}
@@ -834,6 +881,14 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
         </button>
         <button
           type="button"
+          className="image-btn"
+          onClick={() => attachInputRef.current?.click()}
+          title="파일 첨부 (10MB 이하)"
+        >
+          📎
+        </button>
+        <button
+          type="button"
           className={`image-btn ${!isUnlocked('video_message', myProfile) ? 'locked-btn' : ''}`}
           onClick={() => {
             if (!checkUnlockOrAlert('video_message')) return;
@@ -871,6 +926,12 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
           style={{ display: 'none' }}
         />
         <input
+          ref={attachInputRef}
+          type="file"
+          onChange={handleFileAttach}
+          style={{ display: 'none' }}
+        />
+        <input
           ref={inputRef}
           type="text"
           value={input}
@@ -878,7 +939,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
           placeholder={editingMessage ? '수정할 내용...' : '메시지를 입력하세요...'}
           autoFocus
         />
-        <button type="submit" className="send-btn" disabled={!input.trim() && !imagePreview && !editingMessage}>
+        <button type="submit" className="send-btn" disabled={!input.trim() && !imagePreview && !filePreview && !editingMessage}>
           {editingMessage ? '✓' : '✨'}
         </button>
       </form>

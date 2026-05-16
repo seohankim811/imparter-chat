@@ -240,6 +240,26 @@ export default function Message({ message, isOwn, onReply, onReact, onEdit, onDe
                 )}
               </div>
             )}
+            {message.file && (
+              <a
+                href={message.file.data}
+                download={message.file.name}
+                className="file-attachment"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="file-attachment-icon">📎</span>
+                <span className="file-attachment-info">
+                  <span className="file-attachment-name">{message.file.name}</span>
+                  <span className="file-attachment-meta">
+                    {message.file.size < 1024 ? `${message.file.size}B`
+                      : message.file.size < 1024*1024 ? `${(message.file.size/1024).toFixed(1)}KB`
+                      : `${(message.file.size/1024/1024).toFixed(2)}MB`}
+                    {' · 클릭해 다운로드'}
+                  </span>
+                </span>
+                <span className="file-attachment-download">⬇️</span>
+              </a>
+            )}
             {message.text && <p style={{ whiteSpace: 'pre-wrap' }}>{formatText(message.text, searchQuery)}</p>}
             {message.edited && <span className="edited-mark">(수정됨)</span>}
 

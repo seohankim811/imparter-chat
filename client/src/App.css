@@ -1808,6 +1808,100 @@ body {
   border: 1px solid rgba(150, 180, 255, 0.3);
 }
 
+/* ===== 파일 첨부 미리보기 + 메시지 ===== */
+.file-preview-bar {
+  gap: 12px;
+}
+.file-preview-icon {
+  font-size: 30px;
+}
+.file-preview-info {
+  flex: 1;
+  overflow: hidden;
+}
+.file-preview-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #d8e2ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-preview-size {
+  font-size: 11px;
+  color: rgba(200, 215, 255, 0.6);
+  margin-top: 2px;
+}
+
+.file-attachment {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin: 6px 0;
+  background: rgba(40, 50, 90, 0.55);
+  border: 1px solid rgba(150, 180, 255, 0.25);
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+  min-width: 220px;
+  max-width: 320px;
+}
+.file-attachment:hover {
+  background: rgba(60, 75, 130, 0.7);
+  border-color: rgba(150, 180, 255, 0.5);
+  transform: translateY(-1px);
+}
+.file-attachment-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.file-attachment-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.file-attachment-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-attachment-meta {
+  font-size: 10px;
+  color: rgba(220, 230, 255, 0.65);
+  margin-top: 2px;
+}
+.file-attachment-download {
+  font-size: 18px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.file-attachment:hover .file-attachment-download {
+  opacity: 1;
+}
+
+/* 라이트 모드 대응 */
+[data-theme="light"] .file-attachment,
+[data-mode="canva"] .file-attachment {
+  background: rgba(120, 140, 200, 0.12);
+  border-color: rgba(80, 110, 180, 0.25);
+  color: #1a1a2e;
+}
+[data-theme="light"] .file-attachment-name,
+[data-mode="canva"] .file-attachment-name {
+  color: #1a1a2e;
+}
+[data-theme="light"] .file-attachment-meta,
+[data-mode="canva"] .file-attachment-meta {
+  color: rgba(40, 50, 80, 0.65);
+}
+
 .image-preview-close {
   background: rgba(180, 50, 50, 0.4);
   border: 1px solid rgba(255, 80, 80, 0.4);

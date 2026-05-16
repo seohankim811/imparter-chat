@@ -53,7 +53,7 @@ const ADMIN_NICKNAMES = new Set(['서한']);
 
 // VIP 닉네임 — 모든 배지/레벨 자동 부여만 (방장 권한 X, 시크릿 키 불필요)
 // 닉네임이 정확히 일치할 때만 적용 — 추가 인증은 없으니 가족/지인 정도만
-const VIP_NICKNAMES = new Set(['Daddy', 'cindy']);
+const VIP_NICKNAMES = new Set(['Daddy', 'cindy', '지한']);
 
 // ===== 🛡️ 해킹 방지 시스템 =====
 // 관리자 비밀 키 (환경변수 ADMIN_SECRET)
@@ -1515,7 +1515,7 @@ io.on('connection', (socket) => {
     io.to(fullName).emit('room-users', Array.from(room.users).map(id => users.get(id)).filter(Boolean));
   });
 
-  socket.on('send-message', ({ roomName, text, replyTo, image, sticker, video, audio, audioDuration, mode }) => {
+  socket.on('send-message', ({ roomName, text, replyTo, image, sticker, video, audio, audioDuration, file, mode }) => {
     const user = users.get(socket.id);
     if (!user) return;
 
@@ -1531,13 +1531,39 @@ io.on('connection', (socket) => {
     const actualMode = mode || socket.data.mode || 'canva';
     const fullName = fullRoomKey(actualMode, roomName);
     let trimmedText = typeof text === 'string' ? text.trim() : '';
-    if (!trimmedText && !image && !sticker && !video && !audio) return;
+    if (!trimmedText && !image && !sticker && !video && !audio && !file) return;
 
     // 🛡️ XSS 방어 — 위험한 HTML/스크립트 제거
     trimmedText = sanitizeText(trimmedText);
 
     // 텍스트 길이 제한 (DoS 방어)
     if (trimmedText.length > 2000) trimmedText = trimmedText.slice(0, 2000);
+
+    // 파일 검증 — 10MB 제한, 위험한 확장자 차단
+    let safeFile = null;
+    if (file && typeof file === 'object') {
+      const fname = String(file.name || 'file').slice(0, 200);
+      const dangerousExt = /\.(exe|bat|cmd|sh|app|dmg|msi|com|vbs|ps1|jar|scr|pif)$/i;
+      if (dangerousExt.test(fname)) {
+        socket.emit('system-message', { text: '⚠️ 실행 파일은 보낼 수 없어요.', timestamp: Date.now() });
+        return;
+      }
+      // base64 data URL 크기 추정 — 10MB 제한
+      const dataStr = String(file.data || '');
+      if (dataStr.length > 14 * 1024 * 1024) { // base64는 원본의 ~1.37배
+        socket.emit('system-message', { text: '⚠️ 파일은 10MB 이하만 전송할 수 있어요.', timestamp: Date.now() });
+        return;
+      }
+      if (!dataStr.startsWith('data:')) {
+        return; // 잘못된 형식
+      }
+      safeFile = {
+        name: sanitizeText(fname),
+        size: Number(file.size) || 0,
+        type: sanitizeText(String(file.type || 'application/octet-stream').slice(0, 100)),
+        data: dataStr
+      };
+    }
 
     // 욕설 필터 적용 (봇 명령어 제외)
     let censorWarning = false;
@@ -1558,6 +1584,7 @@ io.on('connection', (socket) => {
       audio: audio || null,
       audioDuration: audioDuration || 0,
       sticker: sticker || null,
+      file: safeFile,
       timestamp: Date.now(),
       replyTo: replyTo || null,
       reactions: {},
@@ -1568,7 +1595,12 @@ io.on('connection', (socket) => {
     const room = rooms.get(fullName);
     if (room) {
       room.messages.push(message);
-      room.lastMessage = image ? '📷 사진' : video ? '🎥 비디오' : audio ? '🎤 음성' : sticker ? `${sticker} (스티커)` : trimmedText;
+      room.lastMessage = image ? '📷 사진'
+        : video ? '🎥 비디오'
+        : audio ? '🎤 음성'
+        : safeFile ? `📎 ${safeFile.name}`
+        : sticker ? `${sticker} (스티커)`
+        : trimmedText;
       if (room.messages.length > 500) room.messages.shift();
       saveRooms();
     }
