@@ -135,14 +135,9 @@ export default function Login({ onLogin, theme, toggleTheme }) {
             </div>
           )}
 
-          <button type="submit" className="login-btn" disabled={submitting || !trimmedNick}>
+          <button type="submit" className="login-btn" disabled={submitting || !trimmedNick || (needsKey && !adminSecret)}>
             {submitting ? '인증 중...' : mode.joinButtonText}
           </button>
-          {needsKey && (
-            <p style={{ fontSize: 11, color: '#9ab', textAlign: 'center', marginTop: 8 }}>
-              💡 관리자 키 비워두면 자동으로 통과 (서버에 ADMIN_SECRET 환경변수 등록 시 필수)
-            </p>
-          )}
         </form>
       </div>
     </div>
