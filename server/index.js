@@ -56,11 +56,12 @@ const ADMIN_NICKNAMES = new Set(['서한']);
 const VIP_NICKNAMES = new Set(['Daddy', 'cindy', '지한']);
 
 // ===== 🛡️ 해킹 방지 시스템 =====
-// 관리자 비밀 키 (환경변수 ADMIN_SECRET)
-// Render 대시보드 → Environment 탭 → ADMIN_SECRET 등록
-const ADMIN_SECRET = process.env.ADMIN_SECRET || null;
-if (!ADMIN_SECRET) {
-  console.warn('⚠️ ADMIN_SECRET 환경변수가 설정되지 않았어요. 관리자 닉네임 사용 불가.');
+// 관리자 비밀 키
+// 1순위: Render의 환경변수 ADMIN_SECRET (대시보드 → Environment → Add Environment Variable)
+// 2순위: 아래 fallback (가족용 기본키 — 키 노출되면 Render에 ADMIN_SECRET 설정하면 그게 우선)
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'sh0811-imparter-admin';
+if (!process.env.ADMIN_SECRET) {
+  console.warn('⚠️ ADMIN_SECRET 환경변수 없음 — 코드 fallback 사용 중 (GitHub에 노출됨)');
 }
 
 // 현재 인증된 관리자 소켓 (서버 메모리 - 클라이언트가 위조 불가)
