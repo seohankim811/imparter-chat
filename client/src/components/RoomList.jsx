@@ -20,8 +20,10 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
 
   useEffect(() => {
     const mode = getMode();
-    // 현재 모드를 서버에 먼저 알림
-    socket.emit('set-user', { nickname: user.nickname, icon: user.icon, mode });
+    // 현재 모드를 서버에 먼저 알림 (관리자 키 함께)
+    let adminSecret;
+    try { adminSecret = sessionStorage.getItem('imparter-admin-key') || undefined; } catch (_) {}
+    socket.emit('set-user', { nickname: user.nickname, icon: user.icon, mode, adminSecret });
     socket.emit('get-rooms', { mode });
     socket.emit('get-profile', { nickname: user.nickname });
 

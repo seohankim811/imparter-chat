@@ -230,7 +230,10 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   useEffect(() => {
     let firstLoadTimeout = null;
     const joinRoom = () => {
-      socket.emit('set-user', { nickname: user.nickname, icon: user.icon, mode: getMode() });
+      // 관리자 재접속 시 sessionStorage의 키 같이 전송 (안 그러면 인증 깨져서 서버가 user를 잃어버림)
+      let adminSecret;
+      try { adminSecret = sessionStorage.getItem('imparter-admin-key') || undefined; } catch (_) {}
+      socket.emit('set-user', { nickname: user.nickname, icon: user.icon, mode: getMode(), adminSecret });
       socket.emit('join-room', roomName, { mode: getMode() });
       socket.emit('get-profile', { nickname: user.nickname });
     };
