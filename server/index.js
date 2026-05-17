@@ -1302,11 +1302,16 @@ io.on('connection', (socket) => {
         return;
       }
 
+      // ADMIN_SECRET 미설정 시 → 키 없이도 통과 (개인/가족용 기본 모드)
+      // Render에 ADMIN_SECRET 환경변수 추가하면 자동으로 보안 모드로 전환됨
       if (!ADMIN_SECRET) {
-        socket.emit('login-error', {
-          code: 'ADMIN_NOT_CONFIGURED',
-          message: '이 닉네임은 사용할 수 없습니다'
-        });
+        adminAttempts.delete(ip);
+        verifiedAdmins.add(socket.id);
+        const canonicalNick = [...ADMIN_NICKNAMES].find(a => normalizeNickname(a) === normalizeNickname(cleanNick)) || cleanNick;
+        users.set(socket.id, { nickname: canonicalNick, icon, id: socket.id });
+        if (mode) socket.data.mode = mode;
+        socket.emit('login-success', { isAdmin: true, nickname: canonicalNick });
+        console.log(`✅ 관리자 인증 성공 (open mode): ${canonicalNick}`);
         return;
       }
 
