@@ -2435,6 +2435,27 @@ body {
   min-width: 0;
 }
 
+.game-banner-third {
+  flex: 1;
+  min-width: 0;
+}
+/* 3개 가로 — 좁아지니까 패딩/폰트 살짝 줄임 */
+.game-banners-row-3 .game-banner-third {
+  padding: 12px 10px;
+}
+.game-banners-row-3 .game-banner-title {
+  font-size: 13px;
+}
+.game-banners-row-3 .game-banner-desc {
+  font-size: 10px;
+}
+/* 모바일에선 3개 가로가 너무 좁아서 세로로 */
+@media (max-width: 520px) {
+  .game-banners-row-3 {
+    flex-direction: column;
+  }
+}
+
 .game-banner-keeper {
   background: linear-gradient(135deg, rgba(200, 130, 40, 0.5), rgba(100, 50, 120, 0.6)) !important;
   border-color: rgba(255, 180, 80, 0.35) !important;
