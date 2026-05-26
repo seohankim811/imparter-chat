@@ -126,7 +126,7 @@ export default function App() {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    const themes = ['cosmos', 'light', 'pink', 'neon', 'forest', 'ocean'];
+    const themes = ['cosmos', 'light', 'pink', 'neon', 'forest', 'ocean', 'lumenaria', 'atlantis'];
     setTheme(prev => {
       const idx = themes.indexOf(prev);
       return themes[(idx + 1) % themes.length];

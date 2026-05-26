@@ -584,12 +584,38 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       <div className="chatroom-header">
         <button className="back-btn" onClick={onLeave}>←</button>
         <div className="chatroom-title">
-          <h3>{roomName.startsWith('__claude__') ? '🤖 클로드와 1:1' : roomName}</h3>
-          <span className="user-count">
-            {roomName.startsWith('__claude__')
-              ? '✨ AI 친구 (질문 뭐든 OK)'
-              : connected ? `${roomUsers.length}명 접속 중` : '🔄 재연결 중...'}
-          </span>
+          {(() => {
+            const personaMatch = roomName.match(/^__persona__([a-z_]+)__/);
+            if (personaMatch) {
+              const PERSONA_LABELS = {
+                sophie: { emoji: '✨', name: 'Sophie Foster', desc: '주인공 엘프와 1:1' },
+                keefe: { emoji: '🎨', name: 'Keefe Sencen', desc: '장난꾸러기 Empath와 1:1' },
+                fitz: { emoji: '👑', name: 'Fitz Vacker', desc: '완벽한 Vacker와 1:1' },
+                biana: { emoji: '💎', name: 'Biana Vacker', desc: 'Vanisher와 1:1' },
+                dex: { emoji: '⚙️', name: 'Dex Dizznee', desc: 'Technopath와 1:1' },
+                tam: { emoji: '🌑', name: 'Tam Song', desc: 'Shade와 1:1' },
+                linh: { emoji: '🌊', name: 'Linh Song', desc: 'Hydrokinetic과 1:1' },
+                keefe_dad: { emoji: '💙', name: 'Keefe (진지)', desc: '다정한 Keefe와 1:1' },
+              };
+              const p = PERSONA_LABELS[personaMatch[1]] || { emoji: '🧝', name: personaMatch[1], desc: '캐릭터 1:1' };
+              return (
+                <>
+                  <h3>{p.emoji} {p.name}</h3>
+                  <span className="user-count">{p.desc} · AI 페르소나</span>
+                </>
+              );
+            }
+            return (
+              <>
+                <h3>{(roomName.startsWith('__claude__') || roomName.startsWith('__persona__')) ? '🤖 클로드와 1:1' : roomName}</h3>
+                <span className="user-count">
+                  {(roomName.startsWith('__claude__') || roomName.startsWith('__persona__'))
+                    ? '✨ AI 친구 (질문 뭐든 OK)'
+                    : connected ? `${roomUsers.length}명 접속 중` : '🔄 재연결 중...'}
+                </span>
+              </>
+            );
+          })()}
         </div>
         <button className="icon-header-btn" onClick={() => setShowSearch(!showSearch)} title="검색">
           🔍
@@ -627,7 +653,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
             <span>{getMode() === 'kotlc' ? '접속 중인 엘프' : '접속 중인 사용자'}</span>
             <button className="users-close-btn" onClick={() => setShowUsers(false)}>✕</button>
           </div>
-          {isOwner && !roomName.startsWith('__claude__') && (
+          {isOwner && !(roomName.startsWith('__claude__') || roomName.startsWith('__persona__')) && (
             <div className="user-item">
               <span className="user-item-icon">🗑️</span>
               <span className="user-item-name" style={{ color: '#ff6666' }}>방 삭제</span>

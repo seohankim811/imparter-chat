@@ -112,6 +112,76 @@
   background: linear-gradient(135deg, rgba(80, 150, 255, 0.6), rgba(100, 200, 255, 0.6)) !important;
 }
 
+/* 루메나리아 — 빛의 성 (KOTLC) */
+[data-theme="lumenaria"] body {
+  background: #f5efe0;
+  color: #4a3a1a;
+}
+[data-theme="lumenaria"] .login-container,
+[data-theme="lumenaria"] .room-list-container,
+[data-theme="lumenaria"] .chatroom-container,
+[data-theme="lumenaria"] .profile-page {
+  background: linear-gradient(135deg, #fff8e8 0%, #f0e4c0 40%, #fde8b0 100%);
+}
+[data-theme="lumenaria"] .message.own .message-bubble {
+  background: linear-gradient(135deg, rgba(255, 215, 100, 0.7), rgba(255, 235, 150, 0.7)) !important;
+  border-color: rgba(255, 200, 80, 0.5) !important;
+  color: #4a3a1a !important;
+  box-shadow: 0 0 14px rgba(255, 215, 100, 0.5) !important;
+}
+[data-theme="lumenaria"] .message.other .message-bubble {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(255, 215, 100, 0.5) !important;
+  color: #4a3a1a !important;
+}
+[data-theme="lumenaria"] .login-btn,
+[data-theme="lumenaria"] .create-room-btn,
+[data-theme="lumenaria"] .send-btn {
+  background: linear-gradient(135deg, rgba(255, 200, 80, 0.85), rgba(255, 170, 50, 0.85)) !important;
+  color: #4a3a1a !important;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.7) !important;
+}
+[data-theme="lumenaria"] h1,
+[data-theme="lumenaria"] h2,
+[data-theme="lumenaria"] h3 {
+  text-shadow: 0 0 12px rgba(255, 215, 100, 0.8), 0 0 24px rgba(255, 235, 150, 0.5) !important;
+  color: #6a4a10 !important;
+}
+
+/* 아틀란티스 — 잃어버린 수중 도시 (KOTLC) */
+[data-theme="atlantis"] body {
+  background: #021a28;
+  color: #b0f0ff;
+}
+[data-theme="atlantis"] .login-container,
+[data-theme="atlantis"] .room-list-container,
+[data-theme="atlantis"] .chatroom-container,
+[data-theme="atlantis"] .profile-page {
+  background: radial-gradient(ellipse at top, #0a3848 0%, #042538 50%, #001520 100%);
+}
+[data-theme="atlantis"] .message.own .message-bubble {
+  background: linear-gradient(135deg, rgba(0, 200, 220, 0.5), rgba(50, 230, 255, 0.5)) !important;
+  border: 1px solid #00e0ff !important;
+  box-shadow: 0 0 14px rgba(0, 220, 255, 0.5) !important;
+  color: #e0fcff !important;
+}
+[data-theme="atlantis"] .message.other .message-bubble {
+  background: rgba(20, 100, 130, 0.35) !important;
+  border: 1px solid rgba(120, 220, 240, 0.5) !important;
+  color: #d0f0ff !important;
+}
+[data-theme="atlantis"] .login-btn,
+[data-theme="atlantis"] .create-room-btn,
+[data-theme="atlantis"] .send-btn {
+  background: linear-gradient(135deg, rgba(0, 180, 220, 0.7), rgba(0, 220, 200, 0.7)) !important;
+  color: #021a28 !important;
+}
+[data-theme="atlantis"] h1,
+[data-theme="atlantis"] h2,
+[data-theme="atlantis"] h3 {
+  text-shadow: 0 0 12px #00e0ff, 0 0 24px #008cb0 !important;
+}
+
 /* ===== 클로드 배너 ===== */
 .claude-banner {
   width: 100%;
@@ -945,6 +1015,159 @@ body {
   padding: 10px;
   position: relative;
   z-index: 1;
+}
+
+/* KOTLC 캐릭터 페르소나 배너 */
+.persona-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(150, 100, 220, 0.55), rgba(80, 180, 220, 0.55), rgba(220, 180, 100, 0.45));
+  background-size: 200% 200%;
+  animation: claudeGradient 6s ease infinite;
+  border: 1px solid rgba(200, 170, 255, 0.4);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  color: inherit;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.persona-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px rgba(180, 130, 255, 0.4);
+}
+.persona-banner-icon {
+  font-size: 30px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  flex-shrink: 0;
+  animation: float 3s ease-in-out infinite;
+}
+.persona-banner-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.persona-banner-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.persona-banner-desc {
+  font-size: 12px;
+  opacity: 0.85;
+}
+.persona-banner-status {
+  font-size: 14px;
+  opacity: 0.8;
+}
+.persona-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 0 0 14px 0;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px dashed rgba(200, 170, 255, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+.persona-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(180, 180, 220, 0.25);
+  border-radius: 10px;
+  color: inherit;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.2s ease;
+}
+.persona-card:hover {
+  transform: translateY(-2px) scale(1.03);
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 12px rgba(150, 180, 255, 0.4);
+}
+.persona-card-emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+.persona-card-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+.persona-card-desc {
+  font-size: 10px;
+  opacity: 0.75;
+  text-align: center;
+}
+
+/* 방 검색창 */
+.room-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 4px 0 12px 0;
+  padding: 0 4px;
+}
+.room-search-icon {
+  position: absolute;
+  left: 16px;
+  font-size: 16px;
+  pointer-events: none;
+  opacity: 0.7;
+}
+.room-search-input {
+  width: 100%;
+  padding: 12px 40px 12px 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(180, 180, 220, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.room-search-input:focus {
+  border-color: rgba(180, 200, 255, 0.6);
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 12px rgba(150, 180, 255, 0.25);
+}
+.room-search-input::placeholder {
+  color: rgba(200, 220, 255, 0.4);
+}
+.room-search-clear {
+  position: absolute;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: inherit;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.room-search-clear:hover {
+  background: rgba(255, 100, 100, 0.4);
 }
 
 .empty-rooms {

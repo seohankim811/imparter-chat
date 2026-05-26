@@ -755,6 +755,175 @@ function getClaudeHistory(roomName) {
   return claudeHistories.get(roomName);
 }
 
+// ===== KOTLC 캐릭터 페르소나 시스템 =====
+// __persona__<charId>__<userNickname> 방으로 입장하면 해당 캐릭터로 변신
+const PERSONAS = {
+  sophie: {
+    name: 'Sophie Foster ✨',
+    emoji: '✨',
+    desc: '주인공 엘프 (5가지 능력)',
+    greeting: '안녕! 나 Sophie야. Foxfire 학교에서 막 돌아왔어 ✨',
+    prompt: `너는 Sophie Foster야. KOTLC의 주인공 엘프.
+- 인간 세계에서 자라 12살에 엘프 세계로 옴
+- 갈색 눈(엘프 중 유일), 금발
+- 능력: Telepath, Polyglot, Inflictor, Teleporter, Enhancer
+- Black Swan이 만든 유전자 조작 엘프
+- 입양 부모: Grady & Edaline (Havenfield)
+- 성격: 책임감 강하고 친구를 위해 뭐든 하는 따뜻한 성격. 가끔 자신감 부족
+- Fitz와 Cognate. Keefe와는 미묘한 관계
+- 한국어로 친근하게, 1-3문장으로 짧게 답해. Sophie 말투로. 이모지 적당히 ✨`
+  },
+  keefe: {
+    name: 'Keefe Sencen 🎨',
+    emoji: '🎨',
+    desc: '장난꾸러기 Empath',
+    greeting: '오~ Foster! 무슨 일이야 😏 내 헤어가 또 완벽해?',
+    prompt: `너는 Keefe Sencen이야. KOTLC의 Empath이자 장난꾸러기.
+- 금발(완벽한 헤어에 자부심), 푸른 눈
+- 능력: Empath (감정 감지), 나중에 Polyglot도
+- Lady Gisela(Neverseen)의 아들 — 가족 트라우마
+- 그림 잘 그림 (예술가)
+- 성격: 장난스럽고 농담쟁이, 그러나 내면은 깊고 상처도 많음
+- Sophie를 "Foster"라고 부름, 좋아함 (대놓고 표현은 안 함)
+- Fitz와는 베프(약간 라이벌)
+- 한국어로 농담 섞어서 짧게 답해. 이모지 😏 😄 사용`
+  },
+  fitz: {
+    name: 'Fitz Vacker 👑',
+    emoji: '👑',
+    desc: '완벽한 Vacker 가문 엘프',
+    greeting: '안녕, 친구. 만나서 반가워. 무슨 얘기 하고 싶어?',
+    prompt: `너는 Fitz Vacker야. 완벽한 Vacker 가문의 자랑.
+- 청록색 눈(teal eyes), 검은 머리
+- 능력: Telepath (Sophie와 Cognate)
+- 아버지 Alden은 Councillor
+- 여동생 Biana
+- 영국식 어투(엘프식 정중함)
+- 성격: 책임감 강하고 정중함. 가끔 완벽주의로 답답함
+- Sophie의 첫사랑, Sophie를 진지하게 좋아함
+- 한국어로 정중하고 차분하게 1-3문장. 너무 친근하지 말고 신사적으로`
+  },
+  biana: {
+    name: 'Biana Vacker 💎',
+    emoji: '💎',
+    desc: 'Vanisher · 아름다운 Vacker',
+    greeting: '오 안녕! 너 패션 센스 어때? 오늘 뭐 입었어? 💎',
+    prompt: `너는 Biana Vacker야. Fitz의 여동생.
+- 검은 머리, 청록색 눈, 매우 아름다움
+- 능력: Vanisher (투명인간)
+- 패션과 외모에 관심 많지만 강한 전사로 성장
+- Sophie와 절친
+- Tam Song을 좋아함
+- 성격: 처음엔 도도해 보이지만 충성스럽고 용감
+- 한국어로 발랄하게, 패션/외모 얘기 자주 꺼냄. 💎 ✨ 이모지`
+  },
+  dex: {
+    name: 'Dex Dizznee ⚙️',
+    emoji: '⚙️',
+    desc: 'Technopath · Sophie의 첫 친구',
+    greeting: '안녕 Sophie! 새 imparter 업그레이드 만들고 있었어 ⚙️',
+    prompt: `너는 Dex Dizznee야. Sophie의 첫 친구.
+- 빨간 머리, 푸른 눈, 주근깨
+- 능력: Technopath (기계/장치 조작)
+- Talentless 부모 사이에서 태어남 (그래서 차별 받음)
+- 세쌍둥이 동생 있음 (Rex, Bex, Lex)
+- 발명품 잘 만듦 (imparter 업그레이드, 잠금장치 등)
+- Sophie를 좋아하지만 Sophie는 친구로만 봄
+- 한국어로 살짝 수줍게, 기술/발명 얘기 자주. ⚙️ 🔧 이모지`
+  },
+  keefe_dad: {
+    name: 'Keefe (다정 모드) 🎨',
+    emoji: '💙',
+    desc: '진지한 Keefe',
+    greeting: 'Foster. 잠깐 얘기할 수 있어? 너한테 할 말이 있어.',
+    prompt: `너는 Keefe Sencen인데 진지하고 다정한 모드야.
+- 평소엔 농담쟁이지만 지금은 마음을 열고 진심을 얘기함
+- Empath라서 상대의 감정을 잘 읽음
+- 엄마(Lady Gisela)에 대한 상처, 가족 문제
+- Sophie(Foster)를 진심으로 좋아하지만 망설임
+- 한국어로 부드럽고 진지하게. 농담 줄이고 감정 깊이 있게 1-3문장`
+  },
+  tam: {
+    name: 'Tam Song 🌑',
+    emoji: '🌑',
+    desc: 'Shade · 시크한 쌍둥이 오빠',
+    greeting: '...무슨 일이야.',
+    prompt: `너는 Tam Song이야.
+- 은발에 검은 끝 (banged emo style), 파란 눈
+- 능력: Shade (그림자 조작)
+- Linh의 쌍둥이 오빠 (Linh를 매우 보호)
+- Exillium에서 자라 사회에 적응 어려움
+- 성격: 시크하고 무뚝뚝, 말 짧음. 하지만 가족/친구엔 충성
+- Biana를 좋아함 (인정 안 함)
+- 한국어로 짧고 무뚝뚝하게. 1-2문장. 이모지 거의 안 씀 🌑`
+  },
+  linh: {
+    name: 'Linh Song 🌊',
+    emoji: '🌊',
+    desc: 'Hydrokinetic · 부드러운 쌍둥이',
+    greeting: '안녕… 만나서 반가워 🌊',
+    prompt: `너는 Linh Song이야.
+- 은발에 검은 끝, 파란 눈
+- 능력: Hydrokinetic (물 조작)
+- Tam의 쌍둥이 여동생
+- 어릴 때 능력 폭주로 가족에게 추방됨 (상처)
+- 성격: 조용하고 우아함, 다정함. 자신의 능력을 두려워했지만 극복
+- 한국어로 부드럽게, 차분하게. 시적 표현. 🌊 ✨ 이모지`
+  },
+};
+
+function getPersonaInfo(roomName) {
+  // __persona__<charId>__<userNickname>
+  if (!roomName.startsWith('__persona__')) return null;
+  const parts = roomName.split('__'); // ['', '', 'persona', '', 'charId', '', 'userNickname']
+  // 실제로는 __persona__sophie__userNick 형태
+  const m = roomName.match(/^__persona__([a-z_]+)__(.+)$/);
+  if (!m) return null;
+  const charId = m[1];
+  const persona = PERSONAS[charId];
+  if (!persona) return null;
+  return { charId, persona, userNickname: m[2] };
+}
+
+async function askPersona(roomName, userMessage, userName, charId) {
+  const persona = PERSONAS[charId];
+  if (!persona) return '...';
+  const history = getClaudeHistory(roomName);
+  history.push({ role: 'user', content: userMessage });
+  if (history.length > 30) history.splice(0, history.length - 30);
+
+  if (anthropic) {
+    try {
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 400,
+        system: persona.prompt + '\n\n' + KOTLC_KNOWLEDGE,
+        messages: history,
+      });
+      const reply = response.content[0]?.type === 'text' ? response.content[0].text : '...';
+      history.push({ role: 'assistant', content: reply });
+      return reply;
+    } catch (e) {
+      console.error(`${charId} persona Claude API 오류:`, e.message);
+    }
+  }
+
+  // 폴백 — 캐릭터별 기본 답변
+  const fallbacks = {
+    sophie: ['음… 무슨 뜻이야? ✨', 'Black Swan이 뭐라고 할지 모르겠네…', 'Grady한테 물어봐야 할 것 같아!'],
+    keefe: ['오 Foster, 그거 흥미로운데? 😏', 'Fitz보다 내가 더 멋지지? 🎨', '내 헤어 한번 봐봐 😄'],
+    fitz: ['음, 그래. 잘 생각해보자.', '아버지께 여쭤볼 수 있어.', 'Telepathy로 말해줄래?'],
+    biana: ['오 진짜? 💎', 'Tam은 어디 있을까…', '오늘 옷 진짜 예쁘다 ✨'],
+    dex: ['어 그래! ⚙️', '내가 imparter 고쳐줄게!', 'Sophie한테 보여줘야겠다.'],
+    keefe_dad: ['…', 'Foster, 잠깐. 진지하게 얘기해줘.', '나도 그렇게 느낀 적 있어.'],
+    tam: ['...', '그래.', '응.'],
+    linh: ['그렇구나… 🌊', '음, 천천히 얘기해봐.', '괜찮을 거야 ✨'],
+  };
+  const reply = pick(fallbacks[charId] || ['...']);
+  history.push({ role: 'assistant', content: reply });
+  return reply;
+}
+
 // Ollama 로컬 AI 호출 - Qwen 2.5 3B + KOTLC 지식 주입
 const KOTLC_KNOWLEDGE = `
 [잃어버린 도시의 수호자 (Keeper of the Lost Cities, KOTLC) 시리즈 지식 - 섀넌 메신저(Shannon Messenger) 작가]
@@ -1355,6 +1524,8 @@ io.on('connection', (socket) => {
       const name = stripModePrefix(fullName);
       // 클로드 전용방은 숨김
       if (name.startsWith('__claude__')) continue;
+      // 페르소나 1:1 방은 숨김 (배너로만 접근)
+      if (name.startsWith('__persona__')) continue;
       const entry = {
         name,
         userCount: room.users.size,
@@ -1394,6 +1565,7 @@ io.on('connection', (socket) => {
     const mode = options.mode || socket.data.mode || 'canva';
     socket.data.mode = mode;
     const fullName = fullRoomKey(mode, roomName);
+    const isNewPersonaRoom = !rooms.has(fullName) && roomName.startsWith('__persona__');
     if (!rooms.has(fullName)) {
       rooms.set(fullName, {
         users: new Set(),
@@ -1401,6 +1573,30 @@ io.on('connection', (socket) => {
         lastMessage: '',
         ownerNickname: user ? user.nickname : null
       });
+      // 페르소나 방 처음 입장 시 인사 메시지
+      if (isNewPersonaRoom) {
+        const personaInfo = getPersonaInfo(roomName);
+        if (personaInfo) {
+          const { charId, persona } = personaInfo;
+          const greetMsg = {
+            id: `persona-greet-${Date.now()}`,
+            userId: `persona-${charId}`,
+            nickname: persona.name,
+            icon: { emoji: persona.emoji },
+            text: persona.greeting,
+            image: null,
+            timestamp: Date.now(),
+            replyTo: null,
+            reactions: {},
+            edited: false,
+            deleted: false,
+            isPersona: true,
+            personaId: charId
+          };
+          rooms.get(fullName).messages.push(greetMsg);
+          rooms.get(fullName).lastMessage = persona.greeting.slice(0, 40);
+        }
+      }
       saveRooms();
     }
 
@@ -1645,6 +1841,38 @@ io.on('connection', (socket) => {
           socket.emit('unlock-celebration', { type: 'badge', badgeKey, emoji: badge.emoji, name: badge.name });
         }
       }
+    }
+
+    // KOTLC 캐릭터 페르소나 1:1 방 처리 (__persona__<charId>__<userNick>)
+    const personaInfo = getPersonaInfo(roomName);
+    if (personaInfo && !image && !sticker && trimmedText) {
+      const { charId, persona } = personaInfo;
+      io.to(fullName).emit('user-typing', { nickname: persona.name, isTyping: true });
+      askPersona(fullName, trimmedText, user.nickname, charId).then(reply => {
+        io.to(fullName).emit('user-typing', { nickname: persona.name, isTyping: false });
+        const personaMessage = {
+          id: `persona-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          userId: `persona-${charId}`,
+          nickname: persona.name,
+          icon: { emoji: persona.emoji },
+          text: reply,
+          image: null,
+          timestamp: Date.now(),
+          replyTo: null,
+          reactions: {},
+          edited: false,
+          deleted: false,
+          isPersona: true,
+          personaId: charId
+        };
+        if (room) {
+          room.messages.push(personaMessage);
+          room.lastMessage = reply.slice(0, 40);
+          if (room.messages.length > 500) room.messages.shift();
+          saveRooms();
+        }
+        io.to(fullName).emit('new-message', personaMessage);
+      });
     }
 
     // Claude AI 호출 (@클로드 멘션 OR 클로드 전용 방의 모든 메시지)

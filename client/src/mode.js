@@ -31,6 +31,10 @@ export const MODES = {
       { id: 'tam', emoji: '🌑', name: 'Tam' },
       { id: 'linh', emoji: '🌊', name: 'Linh' },
       { id: 'marella', emoji: '🔥', name: 'Marella' },
+      { id: 'stina', emoji: '🌹', name: 'Stina' },
+      { id: 'wylie', emoji: '⚡', name: 'Wylie' },
+      { id: 'maruca', emoji: '🌀', name: 'Maruca' },
+      { id: 'jensi', emoji: '🤪', name: 'Jensi' },
     ]
   },
   canva: {

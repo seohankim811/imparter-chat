@@ -14,6 +14,7 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
   const [newRoomName, setNewRoomName] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [myProfile, setMyProfile] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const onJoinRoomRef = useRef(onJoinRoom);
 
   useEffect(() => { onJoinRoomRef.current = onJoinRoom; }, [onJoinRoom]);
@@ -57,6 +58,27 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
       return;
     }
     onJoinRoom(`__claude__${user.nickname}`);
+  };
+
+  // KOTLC 캐릭터 1:1 페르소나 채팅
+  const [showPersonaPicker, setShowPersonaPicker] = useState(false);
+  const PERSONA_LIST = [
+    { id: 'sophie', emoji: '✨', name: 'Sophie', desc: '주인공 엘프' },
+    { id: 'keefe', emoji: '🎨', name: 'Keefe', desc: '장난꾸러기 Empath' },
+    { id: 'fitz', emoji: '👑', name: 'Fitz', desc: '완벽한 Vacker' },
+    { id: 'biana', emoji: '💎', name: 'Biana', desc: 'Vanisher' },
+    { id: 'dex', emoji: '⚙️', name: 'Dex', desc: 'Technopath 친구' },
+    { id: 'tam', emoji: '🌑', name: 'Tam', desc: 'Shade · 쿨내' },
+    { id: 'linh', emoji: '🌊', name: 'Linh', desc: '부드러운 Hydrokinetic' },
+    { id: 'keefe_dad', emoji: '💙', name: 'Keefe (진지)', desc: '다정한 Keefe' },
+  ];
+  const handlePersonaClick = (charId) => {
+    if (!isUnlocked('ai_claude', myProfile)) {
+      alert(getLockMessage('ai_claude'));
+      return;
+    }
+    setShowPersonaPicker(false);
+    onJoinRoom(`__persona__${charId}__${user.nickname}`);
   };
 
   const [newRoomPassword, setNewRoomPassword] = useState('');
@@ -142,6 +164,41 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
           </div>
         </button>
 
+        {/* KOTLC 캐릭터 1:1 채팅 (잃도수 모드만) */}
+        {isKotlc && (
+          <button
+            className={`persona-banner ${!isUnlocked('ai_claude', myProfile) ? 'locked-btn' : ''}`}
+            onClick={() => {
+              if (!isUnlocked('ai_claude', myProfile)) { alert(getLockMessage('ai_claude')); return; }
+              setShowPersonaPicker(v => !v);
+            }}
+          >
+            <div className="persona-banner-icon">{isUnlocked('ai_claude', myProfile) ? '🧝' : '🔒'}</div>
+            <div className="persona-banner-info">
+              <span className="persona-banner-title">
+                {isUnlocked('ai_claude', myProfile) ? '✨ KOTLC 캐릭터와 1:1 채팅' : '🔒 캐릭터 채팅 (잠김)'}
+              </span>
+              <span className="persona-banner-desc">
+                {isUnlocked('ai_claude', myProfile)
+                  ? 'Sophie, Keefe, Fitz 등 — 진짜처럼 대화'
+                  : '💬 수다쟁이 배지 필요 (메시지 100개)'}
+              </span>
+            </div>
+            <div className="persona-banner-status">{showPersonaPicker ? '▲' : '▼'}</div>
+          </button>
+        )}
+        {isKotlc && showPersonaPicker && isUnlocked('ai_claude', myProfile) && (
+          <div className="persona-picker-grid">
+            {PERSONA_LIST.map(p => (
+              <button key={p.id} className="persona-card" onClick={() => handlePersonaClick(p.id)}>
+                <span className="persona-card-emoji">{p.emoji}</span>
+                <span className="persona-card-name">{p.name}</span>
+                <span className="persona-card-desc">{p.desc}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* 게임 배너 (잃도수 모드만) — 3개 가로 나란히 */}
         {isKotlc && (
           <div className="game-banners-row game-banners-row-3">
@@ -172,6 +229,22 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
           </div>
         )}
 
+        {/* 방 검색창 */}
+        <div className="room-search-wrap">
+          <span className="room-search-icon">🔍</span>
+          <input
+            type="text"
+            className="room-search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={isKotlc ? '빛의 방 검색…' : '채팅방 검색…'}
+            maxLength={30}
+          />
+          {searchQuery && (
+            <button className="room-search-clear" onClick={() => setSearchQuery('')} aria-label="지우기">✕</button>
+          )}
+        </div>
+
         {rooms.length === 0 && !showCreate && (
           <div className="empty-rooms">
             <span className="empty-icon">🌟</span>
@@ -180,7 +253,21 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
           </div>
         )}
 
-        {rooms.filter(r => !r.name.startsWith('__claude__')).map((room) => {
+        {(() => {
+          const q = searchQuery.trim().toLowerCase();
+          const visible = rooms
+            .filter(r => !r.name.startsWith('__claude__'))
+            .filter(r => !q || r.name.toLowerCase().includes(q));
+          if (rooms.length > 0 && visible.length === 0) {
+            return (
+              <div className="empty-rooms">
+                <span className="empty-icon">🤷</span>
+                <p>"{searchQuery}" 검색 결과 없음</p>
+                <p className="empty-sub">방 이름을 다시 확인해보세요</p>
+              </div>
+            );
+          }
+          return visible.map((room) => {
           const lastSeenKey = `imparter-lastseen-${getMode()}-${room.name}`;
           const lastSeen = parseInt(localStorage.getItem(lastSeenKey) || '0');
           const hasUnread = room.lastMessageTime && room.lastMessageTime > lastSeen;
@@ -208,7 +295,8 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
             </div>
           </button>
           );
-        })}
+          });
+        })()}
       </div>
 
       {showCreate ? (
