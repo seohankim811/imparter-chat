@@ -139,11 +139,17 @@ export default function ProfilePage({ user, theme, onSetTheme, bgmOn, onToggleBg
           <div className="ranking-list">
             {ranking.length === 0 && <div className="empty-msg">아직 랭킹이 없어요</div>}
             {ranking.map((p, i) => (
-              <div key={p.nickname} className={`ranking-item ${p.nickname === user.nickname ? 'me' : ''}`}>
+              <div
+                key={p.nickname}
+                className={`ranking-item ${p.nickname === user.nickname ? 'me' : ''} ${p.isAdmin ? 'admin' : ''}`}
+              >
                 <span className="rank-medal">
                   {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}
                 </span>
-                <span className="rank-name">{p.nickname}</span>
+                <span className="rank-name">
+                  {p.nickname}
+                  {p.isAdmin && <span className="rank-crown" title="관리자">👑</span>}
+                </span>
                 <span className="rank-level">Lv.{p.level}</span>
                 <span className="rank-xp">{p.xp} XP</span>
               </div>

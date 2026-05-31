@@ -558,6 +558,28 @@
   background: rgba(150, 100, 255, 0.15);
 }
 
+.ranking-item.admin {
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.25), rgba(255, 165, 50, 0.18));
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.35);
+  animation: adminPulse 3s ease-in-out infinite;
+}
+.ranking-item.admin .rank-name {
+  color: #fff4c0;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(255, 220, 100, 0.6);
+}
+.rank-crown {
+  margin-left: 6px;
+  font-size: 14px;
+  animation: float 2.5s ease-in-out infinite;
+  display: inline-block;
+}
+@keyframes adminPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(255, 215, 0, 0.35); }
+  50% { box-shadow: 0 0 22px rgba(255, 215, 0, 0.6); }
+}
+
 .rank-medal {
   font-size: 18px;
   width: 30px;

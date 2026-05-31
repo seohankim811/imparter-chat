@@ -53,7 +53,7 @@ const ADMIN_NICKNAMES = new Set(['서한']);
 
 // VIP 닉네임 — 모든 배지/레벨 자동 부여만 (방장 권한 X, 시크릿 키 불필요)
 // 닉네임이 정확히 일치할 때만 적용 — 추가 인증은 없으니 가족/지인 정도만
-const VIP_NICKNAMES = new Set(['Daddy', 'cindy', '지한']);
+const VIP_NICKNAMES = new Set(['Daddy', 'cindy', '지한', 'sia']);
 
 // ===== 🛡️ 해킹 방지 시스템 =====
 // 관리자 비밀 키
@@ -161,6 +161,26 @@ const BADGES = {
 
 function xpForLevel(level) {
   return Math.floor(50 * Math.pow(level, 1.5));
+}
+
+// 랭킹 계산 — 관리자(서한)는 항상 1위로 고정
+function buildRanking(limit = 10) {
+  const all = Array.from(profiles.values());
+  // 관리자 분리
+  const adminProfiles = all.filter(p => ADMIN_NICKNAMES.has(p.nickname));
+  const others = all.filter(p => !ADMIN_NICKNAMES.has(p.nickname));
+  // 일반 사용자 정렬
+  others.sort((a, b) => (b.level * 10000 + b.xp) - (a.level * 10000 + a.xp));
+  // 관리자가 없으면 가상 프로필 생성 (랭킹에만 보임)
+  if (adminProfiles.length === 0) {
+    for (const nick of ADMIN_NICKNAMES) {
+      adminProfiles.push({ nickname: nick, level: 99, xp: 999999, badges: [] });
+    }
+  }
+  // 관리자도 정렬 (여러 명일 경우)
+  adminProfiles.sort((a, b) => (b.level * 10000 + b.xp) - (a.level * 10000 + a.xp));
+  // 합쳐서 limit개
+  return [...adminProfiles, ...others].slice(0, limit);
 }
 
 function getProfile(nickname) {
@@ -386,13 +406,12 @@ function handleBotCommand(text, user) {
   }
 
   if (cmd === '/랭킹' || cmd === '/ranking') {
-    const sorted = Array.from(profiles.values())
-      .sort((a, b) => (b.level * 10000 + b.xp) - (a.level * 10000 + a.xp))
-      .slice(0, 10);
+    const sorted = buildRanking(10);
     if (sorted.length === 0) return { text: '📊 아직 랭킹이 없어요' };
     const lines = sorted.map((p, i) => {
       const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
-      return `${medal} ${p.nickname} - Lv.${p.level} (${p.xp} XP)`;
+      const adminMark = ADMIN_NICKNAMES.has(p.nickname) ? ' 👑' : '';
+      return `${medal} ${p.nickname}${adminMark} - Lv.${p.level} (${p.xp} XP)`;
     });
     return { text: `📊 레벨 랭킹 TOP 10\n${lines.join('\n')}` };
   }
@@ -2063,10 +2082,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('get-ranking', () => {
-    const sorted = Array.from(profiles.values())
-      .sort((a, b) => (b.level * 10000 + b.xp) - (a.level * 10000 + a.xp))
-      .slice(0, 10)
-      .map(p => ({ nickname: p.nickname, level: p.level, xp: p.xp }));
+    const sorted = buildRanking(10).map(p => ({
+      nickname: p.nickname,
+      level: p.level,
+      xp: p.xp,
+      isAdmin: ADMIN_NICKNAMES.has(p.nickname)
+    }));
     socket.emit('ranking-data', sorted);
   });
 
