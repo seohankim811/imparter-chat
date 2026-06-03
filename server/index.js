@@ -1476,53 +1476,14 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // 관리자 닉네임 또는 유사 변형 차단
+    // 관리자 닉네임 — 키 없이 바로 인증 (가족용 오픈 모드)
     if (isReservedNickname(cleanNick)) {
-      const ip = getClientIp(socket);
-      const now = Date.now();
-      const attempt = adminAttempts.get(ip) || { failCount: 0, lockedUntil: 0 };
-
-      if (attempt.lockedUntil > now) {
-        const minutesLeft = Math.ceil((attempt.lockedUntil - now) / 60000);
-        socket.emit('login-error', {
-          code: 'LOCKED',
-          message: `너무 많이 시도했어요. ${minutesLeft}분 뒤 다시 시도하세요.`
-        });
-        return;
-      }
-
-      if (!ADMIN_SECRET) {
-        socket.emit('login-error', {
-          code: 'ADMIN_NOT_CONFIGURED',
-          message: '관리자 키가 서버에 설정 안 돼있어요 (Render Environment → ADMIN_SECRET)'
-        });
-        return;
-      }
-
-      if (typeof adminSecret !== 'string' || adminSecret.length === 0 || adminSecret !== ADMIN_SECRET) {
-        attempt.failCount += 1;
-        if (attempt.failCount >= ADMIN_MAX_FAILS) {
-          attempt.lockedUntil = now + ADMIN_LOCK_MS;
-          attempt.failCount = 0;
-          console.warn(`🚨 관리자 키 ${ADMIN_MAX_FAILS}회 실패 → ${ip} 30분 차단`);
-        }
-        adminAttempts.set(ip, attempt);
-        socket.emit('login-error', {
-          code: 'WRONG_SECRET',
-          message: adminSecret ? '관리자 키가 틀렸어요' : '이 닉네임에는 관리자 키가 필요해요'
-        });
-        return;
-      }
-
-      // 인증 성공
-      adminAttempts.delete(ip);
       verifiedAdmins.add(socket.id);
-      // 닉네임은 정식 관리자 닉네임으로 보정
       const canonicalNick = [...ADMIN_NICKNAMES].find(a => normalizeNickname(a) === normalizeNickname(cleanNick)) || cleanNick;
       users.set(socket.id, { nickname: canonicalNick, icon, id: socket.id });
       if (mode) socket.data.mode = mode;
       socket.emit('login-success', { isAdmin: true, nickname: canonicalNick });
-      console.log(`✅ 관리자 인증 성공: ${canonicalNick} (IP: ${ip})`);
+      console.log(`✅ 관리자 입장 (오픈 모드): ${canonicalNick} (IP: ${getClientIp(socket)})`);
       return;
     }
 
