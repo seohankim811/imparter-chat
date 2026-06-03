@@ -53,7 +53,7 @@ const ADMIN_NICKNAMES = new Set(['서한']);
 
 // VIP 닉네임 — 모든 배지/레벨 자동 부여만 (방장 권한 X, 시크릿 키 불필요)
 // 닉네임이 정확히 일치할 때만 적용 — 추가 인증은 없으니 가족/지인 정도만
-const VIP_NICKNAMES = new Set(['Daddy', 'cindy', '지한', 'sia']);
+const VIP_NICKNAMES = new Set(['Daddy', 'cindy', '지한', 'sia', '목사님']);
 
 // ===== 🛡️ 해킹 방지 시스템 =====
 // 관리자 비밀 키
