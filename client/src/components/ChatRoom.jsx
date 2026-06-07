@@ -202,6 +202,11 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   const [filePreview, setFilePreview] = useState(null); // { name, size, type, data }
   const [myProfile, setMyProfile] = useState(null);
   const [partyTrigger, setPartyTrigger] = useState(0);
+  // 시간대별 비번 스케줄
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [schedule, setSchedule] = useState([]); // [{start, end, password, label}]
+  const [scheduleActiveLabel, setScheduleActiveLabel] = useState(null);
+  const [newSlot, setNewSlot] = useState({ start: '18:00', end: '22:00', password: '', label: '' });
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -339,6 +344,21 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       ));
     });
 
+    // 시간대별 비번 스케줄
+    socket.on('room-schedule-data', ({ schedule: s, activeLabel }) => {
+      setSchedule(Array.isArray(s) ? s : []);
+      setScheduleActiveLabel(activeLabel || null);
+    });
+    socket.on('room-schedule-updated', ({ success, schedule: s }) => {
+      if (success) {
+        setSchedule(Array.isArray(s) ? s : []);
+        alert('✅ 시간대별 비번 저장됨!');
+      }
+    });
+    socket.on('room-schedule-error', ({ message }) => {
+      alert('⚠️ ' + (message || '스케줄 저장 실패'));
+    });
+
     return () => {
       clearTimeout(firstLoadTimeout);
       clearTimeout(typingTimeoutRef.current);
@@ -354,6 +374,9 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       socket.off('room-owner');
       socket.off('kicked');
       socket.off('room-deleted');
+      socket.off('room-schedule-data');
+      socket.off('room-schedule-updated');
+      socket.off('room-schedule-error');
       socket.off('room-delete-error');
       socket.off('user-typing');
       socket.off('message-reaction');
@@ -561,6 +584,50 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
     }
   };
 
+  // 시간대별 비번 스케줄 — 열기
+  const handleOpenSchedule = () => {
+    socket.emit('get-room-password-schedule', { roomName, mode: getMode() });
+    setShowSchedule(true);
+  };
+  // 슬롯 추가
+  const handleAddSlot = () => {
+    const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (!HHMM.test(newSlot.start) || !HHMM.test(newSlot.end)) {
+      alert('시간 형식이 잘못됐어요. HH:MM (예: 18:00)');
+      return;
+    }
+    if (!newSlot.password.trim()) {
+      alert('비밀번호를 입력해주세요');
+      return;
+    }
+    if (schedule.length >= 10) {
+      alert('슬롯은 최대 10개까지 가능해요');
+      return;
+    }
+    const next = [...schedule, {
+      start: newSlot.start,
+      end: newSlot.end,
+      password: newSlot.password.trim(),
+      label: newSlot.label.trim()
+    }];
+    setSchedule(next);
+    setNewSlot({ start: '18:00', end: '22:00', password: '', label: '' });
+  };
+  // 슬롯 삭제
+  const handleRemoveSlot = (idx) => {
+    setSchedule(prev => prev.filter((_, i) => i !== idx));
+  };
+  // 저장
+  const handleSaveSchedule = () => {
+    socket.emit('set-room-password-schedule', { roomName, schedule, mode: getMode() });
+  };
+  // 전체 삭제
+  const handleClearSchedule = () => {
+    if (!confirm('시간대별 비번을 모두 지울까요?')) return;
+    setSchedule([]);
+    socket.emit('set-room-password-schedule', { roomName, schedule: [], mode: getMode() });
+  };
+
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
@@ -654,13 +721,29 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
             <button className="users-close-btn" onClick={() => setShowUsers(false)}>✕</button>
           </div>
           {isOwner && !(roomName.startsWith('__claude__') || roomName.startsWith('__persona__')) && (
-            <div className="user-item">
-              <span className="user-item-icon">🗑️</span>
-              <span className="user-item-name" style={{ color: '#ff6666' }}>방 삭제</span>
-              <button className="kick-btn" onClick={handleDeleteRoom} style={{ background: '#b33333' }}>
-                삭제
-              </button>
-            </div>
+            <>
+              <div className="user-item">
+                <span className="user-item-icon">🕐</span>
+                <span className="user-item-name" style={{ color: '#9bd8ff' }}>
+                  시간대별 비번
+                  {scheduleActiveLabel && (
+                    <span className="owner-badge" style={{ background: '#0d6efd' }}>
+                      활성: {scheduleActiveLabel || 'ON'}
+                    </span>
+                  )}
+                </span>
+                <button className="kick-btn" onClick={handleOpenSchedule} style={{ background: '#1f6feb' }}>
+                  설정
+                </button>
+              </div>
+              <div className="user-item">
+                <span className="user-item-icon">🗑️</span>
+                <span className="user-item-name" style={{ color: '#ff6666' }}>방 삭제</span>
+                <button className="kick-btn" onClick={handleDeleteRoom} style={{ background: '#b33333' }}>
+                  삭제
+                </button>
+              </div>
+            </>
           )}
           {roomUsers.map((u) => (
             <div key={u.id} className="user-item">
@@ -679,6 +762,94 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {showSchedule && (
+        <div className="schedule-modal-overlay" onClick={() => setShowSchedule(false)}>
+          <div className="schedule-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="schedule-modal-header">
+              <h3>🕐 시간대별 비밀번호 설정</h3>
+              <button className="users-close-btn" onClick={() => setShowSchedule(false)}>✕</button>
+            </div>
+            <p className="schedule-help">
+              지정한 시간대에만 그 비번을 요구해요. 예: 저녁 6시~10시는 비번 "fox123",
+              밤 10시~새벽 2시는 비번 "moon999". 시간대 밖이면 일반 비번(있으면) 사용.
+              <br />⏰ 한국 시간 기준. 자정 넘어가도 OK (예: 22:00~02:00).
+            </p>
+
+            {/* 현재 슬롯 목록 */}
+            {schedule.length > 0 ? (
+              <div className="schedule-slots">
+                {schedule.map((slot, idx) => (
+                  <div key={idx} className="schedule-slot-item">
+                    <span className="schedule-time">⏰ {slot.start} ~ {slot.end}</span>
+                    <span className="schedule-pw">🔑 {slot.password}</span>
+                    {slot.label && <span className="schedule-label">📝 {slot.label}</span>}
+                    <button className="schedule-remove-btn" onClick={() => handleRemoveSlot(idx)}>
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="schedule-empty">아직 추가된 시간대가 없어요</div>
+            )}
+
+            {/* 새 슬롯 추가 폼 */}
+            <div className="schedule-add-form">
+              <div className="schedule-add-row">
+                <label>시작</label>
+                <input
+                  type="time"
+                  value={newSlot.start}
+                  onChange={(e) => setNewSlot({ ...newSlot, start: e.target.value })}
+                />
+                <span>~</span>
+                <label>끝</label>
+                <input
+                  type="time"
+                  value={newSlot.end}
+                  onChange={(e) => setNewSlot({ ...newSlot, end: e.target.value })}
+                />
+              </div>
+              <div className="schedule-add-row">
+                <label>비번</label>
+                <input
+                  type="text"
+                  value={newSlot.password}
+                  onChange={(e) => setNewSlot({ ...newSlot, password: e.target.value })}
+                  placeholder="비밀번호"
+                  maxLength={20}
+                />
+              </div>
+              <div className="schedule-add-row">
+                <label>메모</label>
+                <input
+                  type="text"
+                  value={newSlot.label}
+                  onChange={(e) => setNewSlot({ ...newSlot, label: e.target.value })}
+                  placeholder="예: 저녁 시간 (선택)"
+                  maxLength={20}
+                />
+              </div>
+              <button className="schedule-add-btn" onClick={handleAddSlot}>
+                ➕ 슬롯 추가
+              </button>
+            </div>
+
+            {/* 저장 / 전체 삭제 */}
+            <div className="schedule-actions">
+              <button className="schedule-save-btn" onClick={handleSaveSchedule}>
+                💾 저장
+              </button>
+              {schedule.length > 0 && (
+                <button className="schedule-clear-btn" onClick={handleClearSchedule}>
+                  🗑️ 전체 삭제
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

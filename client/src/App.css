@@ -1137,6 +1137,188 @@ body {
   text-align: center;
 }
 
+/* 시간대별 비밀번호 모달 */
+.schedule-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+.schedule-modal {
+  background: linear-gradient(135deg, #1a2040 0%, #0d1535 100%);
+  border: 1px solid rgba(150, 180, 255, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #e0e6ff;
+  box-shadow: 0 0 40px rgba(100, 130, 255, 0.4);
+  animation: slideUp 0.3s ease-out;
+}
+.schedule-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(150, 180, 255, 0.2);
+}
+.schedule-modal-header h3 {
+  font-size: 17px;
+  font-weight: 700;
+}
+.schedule-help {
+  font-size: 12px;
+  color: rgba(200, 220, 255, 0.7);
+  background: rgba(150, 180, 255, 0.08);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+.schedule-empty {
+  text-align: center;
+  padding: 16px;
+  font-size: 13px;
+  color: rgba(200, 220, 255, 0.4);
+  font-style: italic;
+}
+.schedule-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.schedule-slot-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(150, 180, 255, 0.2);
+  border-radius: 8px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.schedule-time {
+  font-weight: 700;
+  color: #9bd8ff;
+}
+.schedule-pw {
+  color: #ffd76b;
+  font-family: 'Menlo', monospace;
+}
+.schedule-label {
+  color: rgba(200, 220, 255, 0.8);
+  flex: 1;
+}
+.schedule-remove-btn {
+  background: rgba(255, 100, 100, 0.3);
+  border: none;
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 11px;
+}
+.schedule-remove-btn:hover {
+  background: rgba(255, 100, 100, 0.6);
+}
+.schedule-add-form {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  border: 1px dashed rgba(150, 180, 255, 0.3);
+}
+.schedule-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.schedule-add-row label {
+  font-size: 12px;
+  width: 36px;
+  flex-shrink: 0;
+  color: rgba(200, 220, 255, 0.7);
+}
+.schedule-add-row input {
+  flex: 1;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(150, 180, 255, 0.3);
+  border-radius: 6px;
+  color: inherit;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  outline: none;
+  min-width: 0;
+}
+.schedule-add-row input:focus {
+  border-color: rgba(150, 180, 255, 0.7);
+  background: rgba(255, 255, 255, 0.16);
+}
+.schedule-add-btn {
+  width: 100%;
+  padding: 9px;
+  margin-top: 4px;
+  background: linear-gradient(135deg, rgba(100, 180, 100, 0.7), rgba(80, 200, 130, 0.7));
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.schedule-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(100, 200, 130, 0.4);
+}
+.schedule-actions {
+  display: flex;
+  gap: 8px;
+}
+.schedule-save-btn {
+  flex: 1;
+  padding: 11px;
+  background: linear-gradient(135deg, #1f6feb, #0d6efd);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.schedule-save-btn:hover {
+  box-shadow: 0 0 14px rgba(30, 110, 235, 0.6);
+}
+.schedule-clear-btn {
+  padding: 11px 14px;
+  background: rgba(180, 60, 60, 0.6);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* 방 검색창 */
 .room-search-wrap {
   position: relative;

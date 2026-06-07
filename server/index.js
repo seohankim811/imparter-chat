@@ -1168,11 +1168,19 @@ const activePolls = new Map(); // roomName -> { question, options, votes: { nick
 // ===== 비밀방 비밀번호 =====
 const roomPasswords = new Map(); // roomName -> password
 
+// 시간대별 비밀번호 스케줄
+// fullName -> [{ start: "HH:MM", end: "HH:MM", password: "xxx", label: "저녁 시간" }]
+const roomPasswordSchedules = new Map();
+
 function savePasswords() {
   try {
     const data = {};
     for (const [n, p] of roomPasswords) data[n] = p;
     fs.writeFileSync(join(__dirname, 'passwords.json'), JSON.stringify(data));
+    // 스케줄도 같이 저장
+    const schedData = {};
+    for (const [n, s] of roomPasswordSchedules) schedData[n] = s;
+    fs.writeFileSync(join(__dirname, 'password-schedules.json'), JSON.stringify(schedData));
   } catch (e) {}
 }
 
@@ -1183,9 +1191,49 @@ function loadPasswords() {
       const data = JSON.parse(fs.readFileSync(f, 'utf-8'));
       for (const [n, p] of Object.entries(data)) roomPasswords.set(n, p);
     }
+    // 스케줄 로드
+    const sf = join(__dirname, 'password-schedules.json');
+    if (fs.existsSync(sf)) {
+      const data = JSON.parse(fs.readFileSync(sf, 'utf-8'));
+      for (const [n, s] of Object.entries(data)) {
+        if (Array.isArray(s)) roomPasswordSchedules.set(n, s);
+      }
+    }
   } catch (e) {}
 }
 loadPasswords();
+
+// 현재 시각에 활성화된 스케줄 비번 찾기 — 한국 시간 기준
+// 슬롯이 자정을 넘어가도 처리 (예: 22:00 ~ 02:00)
+function getActiveSchedulePassword(fullName) {
+  const slots = roomPasswordSchedules.get(fullName);
+  if (!slots || slots.length === 0) return null;
+  // 한국 시간 (UTC+9)
+  const now = new Date();
+  const kstMs = now.getTime() + (now.getTimezoneOffset() + 540) * 60 * 1000;
+  const kst = new Date(kstMs);
+  const cur = kst.getHours() * 60 + kst.getMinutes();
+  for (const slot of slots) {
+    if (!slot || typeof slot.start !== 'string' || typeof slot.end !== 'string') continue;
+    const [sH, sM] = slot.start.split(':').map(Number);
+    const [eH, eM] = slot.end.split(':').map(Number);
+    if (isNaN(sH) || isNaN(eH)) continue;
+    const start = sH * 60 + (sM || 0);
+    const end = eH * 60 + (eM || 0);
+    let active = false;
+    if (start < end) {
+      active = cur >= start && cur < end;
+    } else if (start > end) {
+      // 자정 넘는 슬롯
+      active = cur >= start || cur < end;
+    } else {
+      // start === end → 24시간 활성
+      active = true;
+    }
+    if (active) return { password: slot.password, label: slot.label || '' };
+  }
+  return null;
+}
 
 // ===== 미니게임 상태 =====
 // roomName -> { type, state, players, ... }
@@ -1510,7 +1558,8 @@ io.on('connection', (socket) => {
         name,
         userCount: room.users.size,
         lastMessage: room.lastMessage || '',
-        hasPassword: roomPasswords.has(fullName),
+        hasPassword: roomPasswords.has(fullName) || roomPasswordSchedules.has(fullName),
+        hasSchedule: roomPasswordSchedules.has(fullName),
         ownerNickname: room.ownerNickname || null,
         lastMessageTime: room.messages.length > 0 ? room.messages[room.messages.length - 1].timestamp : 0
       };
@@ -2082,12 +2131,73 @@ io.on('connection', (socket) => {
   socket.on('check-room-password', ({ roomName, password, mode }) => {
     const actualMode = mode || socket.data.mode || 'canva';
     const fullName = fullRoomKey(actualMode, roomName);
+    // 1순위: 시간대별 비번 (현재 활성화된 슬롯)
+    const sched = getActiveSchedulePassword(fullName);
+    if (sched) {
+      return socket.emit('room-password-check', {
+        required: true,
+        ok: password === sched.password,
+        label: sched.label,
+        scheduled: true
+      });
+    }
+    // 2순위: 기본 비번
     const stored = roomPasswords.get(fullName);
     if (!stored) return socket.emit('room-password-check', { required: false, ok: true });
     socket.emit('room-password-check', {
       required: true,
       ok: password === stored
     });
+  });
+
+  // 시간대별 비번 스케줄 — 방장 또는 관리자만 수정 가능
+  socket.on('set-room-password-schedule', ({ roomName, schedule, mode }) => {
+    const user = users.get(socket.id);
+    const actualMode = mode || socket.data.mode || 'canva';
+    const fullName = fullRoomKey(actualMode, roomName);
+    const room = rooms.get(fullName);
+    if (!user || !room) return;
+    if (!canManageRoom(user.nickname, room)) {
+      socket.emit('room-schedule-error', { message: '방장만 수정 가능' });
+      return;
+    }
+    // schedule = [{ start, end, password, label }]
+    if (!Array.isArray(schedule)) {
+      socket.emit('room-schedule-error', { message: '잘못된 형식' });
+      return;
+    }
+    // 검증
+    const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    const clean = [];
+    for (const s of schedule) {
+      if (!s || typeof s !== 'object') continue;
+      if (!HHMM.test(s.start) || !HHMM.test(s.end)) continue;
+      if (typeof s.password !== 'string' || s.password.length === 0 || s.password.length > 20) continue;
+      clean.push({
+        start: s.start,
+        end: s.end,
+        password: s.password,
+        label: (typeof s.label === 'string' ? s.label.slice(0, 20) : '')
+      });
+      if (clean.length >= 10) break; // 최대 10개 슬롯
+    }
+    if (clean.length === 0) {
+      roomPasswordSchedules.delete(fullName);
+    } else {
+      roomPasswordSchedules.set(fullName, clean);
+    }
+    savePasswords();
+    socket.emit('room-schedule-updated', { success: true, schedule: clean });
+    // 다른 사람들에게도 방 정보 새로고침 신호
+    io.to(fullName).emit('room-schedule-changed');
+  });
+
+  socket.on('get-room-password-schedule', ({ roomName, mode }) => {
+    const actualMode = mode || socket.data.mode || 'canva';
+    const fullName = fullRoomKey(actualMode, roomName);
+    const schedule = roomPasswordSchedules.get(fullName) || [];
+    const active = getActiveSchedulePassword(fullName);
+    socket.emit('room-schedule-data', { schedule, activeLabel: active?.label || null });
   });
 
   socket.on('first-game-play', ({ gameId }) => {

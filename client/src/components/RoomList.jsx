@@ -103,12 +103,15 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
   const handleJoinProtectedRoom = (roomName) => {
     const mode = getMode();
     socket.emit('check-room-password', { roomName, password: '', mode });
-    const checkHandler = ({ required, ok }) => {
+    const checkHandler = ({ required, ok, label, scheduled }) => {
       socket.off('room-password-check', checkHandler);
       if (!required) {
         onJoinRoomRef.current(roomName);
       } else {
-        const pw = prompt(`🔒 "${roomName}" 비밀방 입장\n비밀번호를 입력하세요:`);
+        const scheduleHint = scheduled
+          ? `\n🕐 지금은 시간대별 비번 적용 중${label ? ` (${label})` : ''}`
+          : '';
+        const pw = prompt(`🔒 "${roomName}" 비밀방 입장${scheduleHint}\n비밀번호를 입력하세요:`);
         if (pw === null) return;
         socket.emit('check-room-password', { roomName, password: pw, mode });
         const verifyHandler = ({ ok }) => {
