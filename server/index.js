@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 import fs from 'fs';
 import Anthropic from '@anthropic-ai/sdk';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { isSupabaseEnabled, kvGet, kvSet } from './supabase-storage.js';
 
 // Claude AI 클라이언트 (API 키가 환경변수에 있으면 작동)
 const anthropic = process.env.ANTHROPIC_API_KEY
@@ -247,14 +248,30 @@ function checkBadges(profile, context = {}) {
   return newBadges;
 }
 
-function loadProfiles() {
+async function loadProfiles() {
+  // 1순위: Supabase
+  if (isSupabaseEnabled()) {
+    try {
+      const data = await kvGet('profiles');
+      if (data && typeof data === 'object') {
+        for (const [nick, profile] of Object.entries(data)) {
+          profiles.set(nick, profile);
+        }
+        console.log(`☁️ Supabase에서 ${profiles.size}개 프로필 로드`);
+        return;
+      }
+    } catch (e) {
+      console.error('Supabase 프로필 로드 실패, 로컬 시도:', e.message);
+    }
+  }
+  // 2순위: 로컬 JSON
   try {
     if (fs.existsSync(PROFILES_FILE)) {
       const data = JSON.parse(fs.readFileSync(PROFILES_FILE, 'utf-8'));
       for (const [nick, profile] of Object.entries(data)) {
         profiles.set(nick, profile);
       }
-      console.log(`${profiles.size}개의 프로필을 불러왔습니다`);
+      console.log(`💾 로컬에서 ${profiles.size}개 프로필 로드`);
     }
   } catch (e) {
     console.error('프로필 불러오기 실패:', e);
@@ -265,9 +282,14 @@ let profilesSaveTimeout = null;
 function saveProfiles() {
   clearTimeout(profilesSaveTimeout);
   profilesSaveTimeout = setTimeout(async () => {
+    const data = {};
+    for (const [nick, profile] of profiles) data[nick] = profile;
+    // Supabase에 우선 저장
+    if (isSupabaseEnabled()) {
+      try { await kvSet('profiles', data); } catch (e) {}
+    }
+    // 로컬에도 저장 (Supabase 다운 시 폴백)
     try {
-      const data = {};
-      for (const [nick, profile] of profiles) data[nick] = profile;
       await fs.promises.writeFile(PROFILES_FILE + '.tmp', JSON.stringify(data));
       await fs.promises.rename(PROFILES_FILE + '.tmp', PROFILES_FILE);
     } catch (e) {
@@ -496,7 +518,7 @@ function handleBotCommand(text, user) {
   return null;
 }
 
-loadProfiles();
+// startup에서 한 번에 처리 (아래)
 
 // ===== 욕설 필터 =====
 const BAD_WORDS = [
@@ -1172,26 +1194,57 @@ const roomPasswords = new Map(); // roomName -> password
 // fullName -> [{ start: "HH:MM", end: "HH:MM", password: "xxx", label: "저녁 시간" }]
 const roomPasswordSchedules = new Map();
 
+let passwordsSaveTimeout = null;
 function savePasswords() {
-  try {
+  // 디바운스로 묶기 (1초 내 여러 호출 → 1번만 저장)
+  clearTimeout(passwordsSaveTimeout);
+  passwordsSaveTimeout = setTimeout(async () => {
     const data = {};
     for (const [n, p] of roomPasswords) data[n] = p;
-    fs.writeFileSync(join(__dirname, 'passwords.json'), JSON.stringify(data));
-    // 스케줄도 같이 저장
     const schedData = {};
     for (const [n, s] of roomPasswordSchedules) schedData[n] = s;
-    fs.writeFileSync(join(__dirname, 'password-schedules.json'), JSON.stringify(schedData));
-  } catch (e) {}
+    // Supabase 우선
+    if (isSupabaseEnabled()) {
+      try {
+        await kvSet('passwords', data);
+        await kvSet('password_schedules', schedData);
+      } catch (e) {}
+    }
+    // 로컬에도 저장
+    try {
+      fs.writeFileSync(join(__dirname, 'passwords.json'), JSON.stringify(data));
+      fs.writeFileSync(join(__dirname, 'password-schedules.json'), JSON.stringify(schedData));
+    } catch (e) {}
+  }, 500);
 }
 
-function loadPasswords() {
+async function loadPasswords() {
+  // 1순위: Supabase
+  if (isSupabaseEnabled()) {
+    try {
+      const pw = await kvGet('passwords');
+      if (pw && typeof pw === 'object') {
+        for (const [n, p] of Object.entries(pw)) roomPasswords.set(n, p);
+      }
+      const sched = await kvGet('password_schedules');
+      if (sched && typeof sched === 'object') {
+        for (const [n, s] of Object.entries(sched)) {
+          if (Array.isArray(s)) roomPasswordSchedules.set(n, s);
+        }
+      }
+      console.log(`☁️ Supabase에서 비번 ${roomPasswords.size}개, 스케줄 ${roomPasswordSchedules.size}개 로드`);
+      return;
+    } catch (e) {
+      console.error('Supabase 비번 로드 실패, 로컬 시도:', e.message);
+    }
+  }
+  // 2순위: 로컬
   try {
     const f = join(__dirname, 'passwords.json');
     if (fs.existsSync(f)) {
       const data = JSON.parse(fs.readFileSync(f, 'utf-8'));
       for (const [n, p] of Object.entries(data)) roomPasswords.set(n, p);
     }
-    // 스케줄 로드
     const sf = join(__dirname, 'password-schedules.json');
     if (fs.existsSync(sf)) {
       const data = JSON.parse(fs.readFileSync(sf, 'utf-8'));
@@ -1201,7 +1254,6 @@ function loadPasswords() {
     }
   } catch (e) {}
 }
-loadPasswords();
 
 // 현재 시각에 활성화된 스케줄 비번 찾기 — 한국 시간 기준
 // 슬롯이 자정을 넘어가도 처리 (예: 22:00 ~ 02:00)
@@ -1413,30 +1465,48 @@ function handleGameCommand(text, user, roomName) {
   return null;
 }
 
-// 방 데이터 불러오기
-function loadRooms() {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-      for (const [name, room] of Object.entries(data)) {
-        // 저장된 이미지/비디오/음성 플레이스홀더는 null로 복원
-        const messages = (room.messages || []).map(m => ({
-          ...m,
-          image: m.image === '__image__' ? null : m.image,
-          video: m.video === '__video__' ? null : m.video,
-          audio: m.audio === '__audio__' ? null : m.audio
-        }));
-        rooms.set(name, {
-          users: new Set(),
-          messages,
-          lastMessage: room.lastMessage || '',
-          ownerNickname: room.ownerNickname || null
-        });
-      }
-      console.log(`${rooms.size}개의 방을 불러왔습니다`);
+// 방 데이터 불러오기 — Supabase 우선, 로컬 JSON 폴백
+async function loadRooms() {
+  let data = null;
+  // 1순위: Supabase
+  if (isSupabaseEnabled()) {
+    try {
+      data = await kvGet('rooms');
+      if (data) console.log('☁️ Supabase에서 방 데이터 로드 시도');
+    } catch (e) {
+      console.error('Supabase 방 로드 실패:', e.message);
     }
+  }
+  // 2순위: 로컬 JSON
+  if (!data) {
+    try {
+      if (fs.existsSync(DATA_FILE)) {
+        data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+      }
+    } catch (e) {
+      console.error('방 데이터 불러오기 실패:', e);
+    }
+  }
+  if (!data) return;
+  try {
+    for (const [name, room] of Object.entries(data)) {
+      // 저장된 이미지/비디오/음성 플레이스홀더는 null로 복원
+      const messages = (room.messages || []).map(m => ({
+        ...m,
+        image: m.image === '__image__' ? null : m.image,
+        video: m.video === '__video__' ? null : m.video,
+        audio: m.audio === '__audio__' ? null : m.audio
+      }));
+      rooms.set(name, {
+        users: new Set(),
+        messages,
+        lastMessage: room.lastMessage || '',
+        ownerNickname: room.ownerNickname || null
+      });
+    }
+    console.log(`${rooms.size}개의 방을 불러왔습니다`);
   } catch (e) {
-    console.error('방 데이터 불러오기 실패:', e);
+    console.error('방 데이터 파싱 실패:', e);
   }
 }
 
@@ -1467,6 +1537,11 @@ async function doSave() {
         ownerNickname: room.ownerNickname
       };
     }
+    // Supabase 우선
+    if (isSupabaseEnabled()) {
+      try { await kvSet('rooms', data); } catch (e) {}
+    }
+    // 로컬에도 (Supabase 다운 시 폴백)
     await fs.promises.writeFile(DATA_FILE + '.tmp', JSON.stringify(data));
     await fs.promises.rename(DATA_FILE + '.tmp', DATA_FILE);
   } catch (e) {
@@ -1485,7 +1560,14 @@ function saveRooms() {
   saveTimeout = setTimeout(doSave, 1000);
 }
 
-loadRooms();
+// 시작 시점 데이터 로딩 (Supabase 우선, 로컬 폴백)
+async function startup() {
+  await loadProfiles();
+  await loadPasswords();
+  await loadRooms();
+  console.log('🚀 데이터 로딩 완료');
+}
+startup().catch(e => console.error('startup 실패:', e));
 
 // 방 이름에 모드 prefix 내장 (서버 내부용)
 // 형식: `mode::roomName` — 예: `canva::형제방`, `kotlc::아크로5인방`
@@ -2166,16 +2248,26 @@ io.on('connection', (socket) => {
       socket.emit('room-schedule-error', { message: '잘못된 형식' });
       return;
     }
-    // 검증
-    const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    // 시간 정규화 — "18:00", "18:00:00", "8:0", "08:00" 모두 받음
+    const normTime = (t) => {
+      if (!t) return null;
+      const m = String(t).trim().match(/^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$/);
+      if (!m) return null;
+      const h = parseInt(m[1], 10);
+      const min = parseInt(m[2], 10);
+      if (isNaN(h) || isNaN(min) || h < 0 || h > 23 || min < 0 || min > 59) return null;
+      return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+    };
     const clean = [];
     for (const s of schedule) {
       if (!s || typeof s !== 'object') continue;
-      if (!HHMM.test(s.start) || !HHMM.test(s.end)) continue;
+      const start = normTime(s.start);
+      const end = normTime(s.end);
+      if (!start || !end) continue;
       if (typeof s.password !== 'string' || s.password.length === 0 || s.password.length > 20) continue;
       clean.push({
-        start: s.start,
-        end: s.end,
+        start,
+        end,
         password: s.password,
         label: (typeof s.label === 'string' ? s.label.slice(0, 20) : '')
       });

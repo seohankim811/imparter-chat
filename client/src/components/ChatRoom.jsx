@@ -589,11 +589,22 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
     socket.emit('get-room-password-schedule', { roomName, mode: getMode() });
     setShowSchedule(true);
   };
+  // 시간 정규화 — "18:00", "18:00:00", "8:0", "08:00" 모두 받음
+  const normalizeTime = (t) => {
+    if (!t) return null;
+    const m = String(t).trim().match(/^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$/);
+    if (!m) return null;
+    const h = parseInt(m[1], 10);
+    const min = parseInt(m[2], 10);
+    if (isNaN(h) || isNaN(min) || h < 0 || h > 23 || min < 0 || min > 59) return null;
+    return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+  };
   // 슬롯 추가
   const handleAddSlot = () => {
-    const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    if (!HHMM.test(newSlot.start) || !HHMM.test(newSlot.end)) {
-      alert('시간 형식이 잘못됐어요. HH:MM (예: 18:00)');
+    const start = normalizeTime(newSlot.start);
+    const end = normalizeTime(newSlot.end);
+    if (!start || !end) {
+      alert(`시간 형식이 잘못됐어요. HH:MM (예: 18:00)\n\n입력: 시작="${newSlot.start}", 끝="${newSlot.end}"`);
       return;
     }
     if (!newSlot.password.trim()) {
@@ -605,8 +616,8 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       return;
     }
     const next = [...schedule, {
-      start: newSlot.start,
-      end: newSlot.end,
+      start,
+      end,
       password: newSlot.password.trim(),
       label: newSlot.label.trim()
     }];
