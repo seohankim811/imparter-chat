@@ -2183,6 +2183,58 @@ io.on('connection', (socket) => {
     socket.emit('ranking-data', sorted);
   });
 
+  // 🌟 초대 시스템 — 카톡 스타일
+  // 현재 접속 중인 사용자 목록 (다른 방 사용자도 포함)
+  socket.on('get-online-users', ({ mode }) => {
+    const inviter = users.get(socket.id);
+    if (!inviter) return;
+    const actualMode = mode || socket.data.mode || 'canva';
+    const list = [];
+    const seen = new Set();
+    for (const [sid, u] of users) {
+      if (!u || !u.nickname) continue;
+      if (u.nickname === inviter.nickname) continue;
+      if (seen.has(u.nickname)) continue;
+      seen.add(u.nickname);
+      list.push({ nickname: u.nickname, icon: u.icon || null });
+    }
+    socket.emit('online-users-list', list);
+  });
+
+  // 친구 초대 — 특정 닉네임에게 방 초대 알림 전송
+  socket.on('invite-user', ({ targetNickname, roomName, mode }) => {
+    const inviter = users.get(socket.id);
+    if (!inviter || !targetNickname || !roomName) return;
+    const actualMode = mode || socket.data.mode || 'canva';
+    const fullName = fullRoomKey(actualMode, roomName);
+    const room = rooms.get(fullName);
+    if (!room) return;
+    // 페르소나/클로드 방은 초대 불가
+    if (roomName.startsWith('__claude__') || roomName.startsWith('__persona__')) {
+      socket.emit('invite-error', { message: 'AI 방은 초대할 수 없어요' });
+      return;
+    }
+    // 타겟 사용자의 모든 소켓 찾기 (한 사용자가 여러 탭 가능)
+    let sentCount = 0;
+    for (const [sid, u] of users) {
+      if (u && u.nickname === targetNickname) {
+        io.to(sid).emit('room-invite', {
+          from: inviter.nickname,
+          fromIcon: inviter.icon || null,
+          roomName,
+          mode: actualMode,
+          timestamp: Date.now()
+        });
+        sentCount += 1;
+      }
+    }
+    if (sentCount === 0) {
+      socket.emit('invite-error', { message: `${targetNickname}님은 지금 접속 중이 아니에요` });
+    } else {
+      socket.emit('invite-success', { targetNickname, sentCount });
+    }
+  });
+
   socket.on('vote-poll', ({ roomName, messageId, optionIdx, mode }) => {
     const user = users.get(socket.id);
     if (!user) return;

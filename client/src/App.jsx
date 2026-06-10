@@ -47,7 +47,24 @@ export default function App() {
       alert(`🎉 첫 플레이 보상!\n${gameName}을(를) 처음 플레이하셨네요!\n+${xp} XP 획득${leveledUp ? `\n🎊 Lv.${level}로 레벨업!` : ''}`);
     };
     socket.on('game-reward', handleReward);
-    return () => socket.off('game-reward', handleReward);
+    // 친구 초대 알림 받기
+    const handleInvite = ({ from, fromIcon, roomName: invitedRoom, mode: invitedMode }) => {
+      const icon = fromIcon?.emoji || '✨';
+      const accept = confirm(`💌 친구 초대장!\n\n${icon} ${from}님이 "${invitedRoom}" 방으로 초대했어요.\n\n참여할까요?`);
+      if (accept) {
+        // 다른 모드면 안내
+        if (invitedMode && invitedMode !== MODE) {
+          alert(`이 방은 ${invitedMode === 'kotlc' ? '잃도수' : '일반'} 버전이에요. 그쪽으로 다시 접속해주세요.\nURL: ${invitedMode === 'kotlc' ? '/kotlc' : '/'}`);
+          return;
+        }
+        setCurrentRoom(invitedRoom);
+      }
+    };
+    socket.on('room-invite', handleInvite);
+    return () => {
+      socket.off('game-reward', handleReward);
+      socket.off('room-invite', handleInvite);
+    };
   }, []);
 
   useEffect(() => {
@@ -126,7 +143,7 @@ export default function App() {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    const themes = ['cosmos', 'light', 'pink', 'neon', 'forest', 'ocean', 'lumenaria', 'atlantis'];
+    const themes = ['cosmos', 'kakao', 'light', 'pink', 'neon', 'forest', 'ocean', 'lumenaria', 'atlantis'];
     setTheme(prev => {
       const idx = themes.indexOf(prev);
       return themes[(idx + 1) % themes.length];

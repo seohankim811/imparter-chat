@@ -202,6 +202,11 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   const [filePreview, setFilePreview] = useState(null); // { name, size, type, data }
   const [myProfile, setMyProfile] = useState(null);
   const [partyTrigger, setPartyTrigger] = useState(0);
+  // 친구 초대
+  const [showInvite, setShowInvite] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [inviteSearch, setInviteSearch] = useState('');
+  const [manualInviteNick, setManualInviteNick] = useState('');
   // 시간대별 비번 스케줄
   const [showSchedule, setShowSchedule] = useState(false);
   const [schedule, setSchedule] = useState([]); // [{start, end, password, label}]
@@ -344,6 +349,17 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       ));
     });
 
+    // 친구 초대
+    socket.on('online-users-list', (list) => {
+      setOnlineUsers(Array.isArray(list) ? list : []);
+    });
+    socket.on('invite-success', ({ targetNickname }) => {
+      alert(`✅ ${targetNickname}님에게 초대장을 보냈어요!`);
+    });
+    socket.on('invite-error', ({ message }) => {
+      alert('⚠️ ' + (message || '초대 실패'));
+    });
+
     // 시간대별 비번 스케줄
     socket.on('room-schedule-data', ({ schedule: s, activeLabel }) => {
       setSchedule(Array.isArray(s) ? s : []);
@@ -377,6 +393,9 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       socket.off('room-schedule-data');
       socket.off('room-schedule-updated');
       socket.off('room-schedule-error');
+      socket.off('online-users-list');
+      socket.off('invite-success');
+      socket.off('invite-error');
       socket.off('room-delete-error');
       socket.off('user-typing');
       socket.off('message-reaction');
@@ -584,6 +603,27 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
     }
   };
 
+  // 친구 초대 — 열기
+  const handleOpenInvite = () => {
+    socket.emit('get-online-users', { mode: getMode() });
+    setShowInvite(true);
+    setInviteSearch('');
+    setManualInviteNick('');
+  };
+  // 친구 초대 — 전송
+  const handleInviteUser = (targetNickname) => {
+    if (!targetNickname || !targetNickname.trim()) {
+      alert('초대할 친구 닉네임을 입력해주세요');
+      return;
+    }
+    socket.emit('invite-user', {
+      targetNickname: targetNickname.trim(),
+      roomName,
+      mode: getMode()
+    });
+    setManualInviteNick('');
+  };
+
   // 시간대별 비번 스케줄 — 열기
   const handleOpenSchedule = () => {
     socket.emit('get-room-password-schedule', { roomName, mode: getMode() });
@@ -731,6 +771,17 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
             <span>{getMode() === 'kotlc' ? '접속 중인 엘프' : '접속 중인 사용자'}</span>
             <button className="users-close-btn" onClick={() => setShowUsers(false)}>✕</button>
           </div>
+          {!(roomName.startsWith('__claude__') || roomName.startsWith('__persona__')) && (
+            <div className="user-item">
+              <span className="user-item-icon">➕</span>
+              <span className="user-item-name" style={{ color: '#7eddff' }}>
+                친구 초대
+              </span>
+              <button className="kick-btn" onClick={handleOpenInvite} style={{ background: '#fee500', color: '#1a1a1a' }}>
+                초대
+              </button>
+            </div>
+          )}
           {isOwner && !(roomName.startsWith('__claude__') || roomName.startsWith('__persona__')) && (
             <>
               <div className="user-item">
@@ -773,6 +824,73 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {showInvite && (
+        <div className="schedule-modal-overlay" onClick={() => setShowInvite(false)}>
+          <div className="schedule-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="schedule-modal-header">
+              <h3>➕ 친구 초대</h3>
+              <button className="users-close-btn" onClick={() => setShowInvite(false)}>✕</button>
+            </div>
+            <p className="schedule-help">
+              "{roomName}" 방으로 친구를 초대해요. 닉네임으로 직접 초대하거나, 지금 접속 중인
+              사람 중에 골라 초대할 수 있어요. 친구한테 알림이 가요!
+            </p>
+
+            {/* 닉네임 직접 입력 */}
+            <div className="schedule-add-form">
+              <div className="schedule-add-row">
+                <label>닉네임</label>
+                <input
+                  type="text"
+                  value={manualInviteNick}
+                  onChange={(e) => setManualInviteNick(e.target.value)}
+                  placeholder="친구 닉네임 입력"
+                  maxLength={20}
+                />
+              </div>
+              <button className="schedule-add-btn" onClick={() => handleInviteUser(manualInviteNick)}>
+                💌 초대장 보내기
+              </button>
+            </div>
+
+            {/* 접속 중인 친구 목록 */}
+            <div style={{ marginTop: '14px', marginBottom: '8px', fontSize: '13px', opacity: 0.8 }}>
+              👥 지금 접속 중인 친구 ({onlineUsers.length}명)
+            </div>
+            <div className="schedule-add-row" style={{ marginBottom: '10px' }}>
+              <input
+                type="text"
+                value={inviteSearch}
+                onChange={(e) => setInviteSearch(e.target.value)}
+                placeholder="이름으로 검색..."
+                style={{ flex: 1 }}
+              />
+            </div>
+            {onlineUsers.length === 0 ? (
+              <div className="schedule-empty">지금 접속 중인 다른 친구가 없어요</div>
+            ) : (
+              <div className="schedule-slots" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                {onlineUsers
+                  .filter(u => !inviteSearch || u.nickname.toLowerCase().includes(inviteSearch.toLowerCase()))
+                  .map(u => (
+                    <div key={u.nickname} className="schedule-slot-item">
+                      <span style={{ fontSize: '18px' }}>{u.icon?.emoji || '✨'}</span>
+                      <span className="schedule-label">{u.nickname}</span>
+                      <button
+                        className="kick-btn"
+                        style={{ background: '#fee500', color: '#1a1a1a' }}
+                        onClick={() => handleInviteUser(u.nickname)}
+                      >
+                        초대
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
