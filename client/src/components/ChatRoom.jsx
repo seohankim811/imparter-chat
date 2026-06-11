@@ -735,17 +735,10 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
             );
           })()}
         </div>
-        <button className="icon-header-btn" onClick={() => setShowSearch(!showSearch)} title="검색">
-          🔍
-        </button>
-        <button className="icon-header-btn" onClick={toggleTheme} title="테마">
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
-        <button className="icon-header-btn" onClick={toggleSound} title={soundOn ? '알림 켜짐' : '알림 꺼짐'}>
-          {soundOn ? '🔔' : '🔕'}
-        </button>
-        <button className="users-toggle-btn" onClick={() => setShowUsers(!showUsers)}>
-          👥 {roomUsers.length}
+        <button className="hamburger-btn" onClick={() => setShowUsers(!showUsers)} title="메뉴" aria-label="메뉴 열기">
+          <span></span>
+          <span></span>
+          <span></span>
         </button>
       </div>
 
@@ -766,22 +759,39 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
       )}
 
       {showUsers && (
-        <div className="users-panel">
-          <div className="users-panel-header">
-            <span>{getMode() === 'kotlc' ? '접속 중인 엘프' : '접속 중인 사용자'}</span>
-            <button className="users-close-btn" onClick={() => setShowUsers(false)}>✕</button>
-          </div>
-          {!(roomName.startsWith('__claude__') || roomName.startsWith('__persona__')) && (
-            <div className="user-item">
-              <span className="user-item-icon">➕</span>
-              <span className="user-item-name" style={{ color: '#7eddff' }}>
-                친구 초대
-              </span>
-              <button className="kick-btn" onClick={handleOpenInvite} style={{ background: '#fee500', color: '#1a1a1a' }}>
-                초대
-              </button>
+        <>
+          <div className="drawer-overlay" onClick={() => setShowUsers(false)} />
+          <div className="users-panel kakao-drawer">
+            <div className="users-panel-header">
+              <span>{getMode() === 'kotlc' ? '메뉴' : '메뉴'}</span>
+              <button className="users-close-btn" onClick={() => setShowUsers(false)}>✕</button>
             </div>
-          )}
+
+            {/* 빠른 액션 — 카톡 스타일 아이콘 그리드 */}
+            <div className="drawer-quick-actions">
+              <button className="drawer-action" onClick={() => { setShowSearch(s => !s); setShowUsers(false); }}>
+                <span className="drawer-action-icon">🔍</span>
+                <span className="drawer-action-label">검색</span>
+              </button>
+              <button className="drawer-action" onClick={toggleTheme}>
+                <span className="drawer-action-icon">🎨</span>
+                <span className="drawer-action-label">테마</span>
+              </button>
+              <button className="drawer-action" onClick={toggleSound}>
+                <span className="drawer-action-icon">{soundOn ? '🔔' : '🔕'}</span>
+                <span className="drawer-action-label">{soundOn ? '알림 켜짐' : '알림 꺼짐'}</span>
+              </button>
+              {!(roomName.startsWith('__claude__') || roomName.startsWith('__persona__')) && (
+                <button className="drawer-action drawer-action-primary" onClick={() => { setShowUsers(false); handleOpenInvite(); }}>
+                  <span className="drawer-action-icon">➕</span>
+                  <span className="drawer-action-label">친구 초대</span>
+                </button>
+              )}
+            </div>
+
+            <div className="drawer-section-title">
+              👥 접속 중 ({roomUsers.length}명)
+            </div>
           {isOwner && !(roomName.startsWith('__claude__') || roomName.startsWith('__persona__')) && (
             <>
               <div className="user-item">
@@ -824,7 +834,8 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
               )}
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {showInvite && (
