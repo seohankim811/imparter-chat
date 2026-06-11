@@ -4845,3 +4845,116 @@ body {
   .cb-leader-stats { gap: 8px; font-size: 12px; }
   .cb-end-turn { padding: 6px 12px; font-size: 12px; }
 }
+
+/* ===== 카톡 테마 최종 강제 오버라이드 (반드시 파일 끝 — 가장 마지막에 와야 다른 !important 이김) ===== */
+
+/* 모든 배너/카드: 흰 배경 + 검은 텍스트로 강제 통일 */
+[data-theme="kakao"] .room-list-header,
+[data-mode="kotlc"][data-theme="kakao"] .room-list-header,
+html[data-theme="kakao"] .room-list-header {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #1a1a1a !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+html[data-theme="kakao"] .room-list-header h2,
+html[data-theme="kakao"] .room-list-header * {
+  color: #1a1a1a !important;
+}
+
+/* 클로드 / 페르소나 / 모든 게임 배너: 흰색 카드로 통일 */
+html[data-theme="kakao"] .claude-banner,
+html[data-theme="kakao"] .persona-banner,
+html[data-theme="kakao"] .game-banner,
+html[data-theme="kakao"] .game-banner-keeper,
+html[data-theme="kakao"] .game-banner-cardbattle,
+html[data-theme="kakao"] .game-banner-third {
+  background: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid #f0f0f0 !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+  color: #1a1a1a !important;
+  padding: 14px 16px !important;
+  margin: 0 !important;
+}
+html[data-theme="kakao"] .claude-banner *,
+html[data-theme="kakao"] .persona-banner *,
+html[data-theme="kakao"] .game-banner * {
+  color: #1a1a1a !important;
+  text-shadow: none !important;
+}
+html[data-theme="kakao"] .claude-banner-desc,
+html[data-theme="kakao"] .persona-banner-desc,
+html[data-theme="kakao"] .game-banner-desc {
+  color: #888 !important;
+}
+html[data-theme="kakao"] .claude-banner-icon,
+html[data-theme="kakao"] .persona-banner-icon,
+html[data-theme="kakao"] .game-banner-icon {
+  background: #f0f0f0 !important;
+  background-image: none !important;
+  animation: none !important;
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 22px !important;
+  border-radius: 14px !important;
+}
+html[data-theme="kakao"] .claude-banner-status,
+html[data-theme="kakao"] .game-banner-play {
+  background: #fee500 !important;
+  color: #1a1a1a !important;
+  font-size: 11px !important;
+  padding: 4px 8px !important;
+  border-radius: 10px !important;
+}
+html[data-theme="kakao"] .claude-pulse {
+  background: #00c853 !important;
+}
+
+/* 게임 배너 가로 정렬도 카톡식으로: 3개를 한 줄 → 그냥 리스트 행 3개 */
+html[data-theme="kakao"] .game-banners-row,
+html[data-theme="kakao"] .game-banners-row-3 {
+  display: block !important;
+  gap: 0 !important;
+}
+html[data-theme="kakao"] .game-banner-third {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+/* 컨테이너 배경 강제 */
+html[data-theme="kakao"] body,
+html[data-theme="kakao"] .room-list-container,
+html[data-theme="kakao"] .chatroom-container,
+html[data-theme="kakao"] .login-container {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+/* 룸 리스트 콘텐츠 영역 */
+html[data-theme="kakao"] .room-list-content {
+  background: #ffffff !important;
+  padding: 0 !important;
+}
+
+/* 검색창 자리 */
+html[data-theme="kakao"] .room-search-wrap {
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  background: #f7f7f7 !important;
+}
+
+/* 빈 방 텍스트 */
+html[data-theme="kakao"] .empty-rooms,
+html[data-theme="kakao"] .empty-rooms p {
+  color: #888 !important;
+}
+
+
