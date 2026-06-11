@@ -21,7 +21,7 @@ export const MODES = {
     leaveMessage: '님이 빛의 다리를 건너 퇴장했습니다',
     nicknameLabel: '엘프 이름',
     avatarLabel: '캐릭터 선택',
-    defaultTheme: 'cosmos',
+    defaultTheme: 'kakao',
     icons: [
       { id: 'sophie', emoji: '✨', name: 'Sophie' },
       { id: 'fitz', emoji: '👑', name: 'Fitz' },

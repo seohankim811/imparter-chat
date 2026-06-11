@@ -133,13 +133,13 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
       <div className="stars-bg" />
 
       <div className="room-list-header">
-        <button className="header-user-btn" onClick={onOpenProfile} title="내 프로필">
-          <span className="header-icon">{user?.icon?.emoji || '✨'}</span>
-          <span className="header-nickname">{user?.nickname || ''}</span>
-        </button>
         <h2>{modeConfig.roomListTitle}</h2>
         <button className="icon-header-btn" onClick={toggleTheme} title="테마 변경">
           🎨
+        </button>
+        <button className="header-user-btn" onClick={onOpenProfile} title="내 프로필">
+          <span className="header-icon">{user?.icon?.emoji || '✨'}</span>
+          <span className="header-nickname header-nickname-compact">{user?.nickname || ''}</span>
         </button>
         <button className="logout-btn" onClick={onLogout}>나가기</button>
       </div>
