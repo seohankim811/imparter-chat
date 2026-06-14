@@ -199,6 +199,7 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
   const [showCommands, setShowCommands] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
+  const [showPlusTray, setShowPlusTray] = useState(false);
   const [filePreview, setFilePreview] = useState(null); // { name, size, type, data }
   const [myProfile, setMyProfile] = useState(null);
   const [partyTrigger, setPartyTrigger] = useState(0);
@@ -1183,71 +1184,89 @@ export default function ChatRoom({ user, roomName, onLeave, theme, toggleTheme }
         />
       )}
 
+      {/* 카톡식 + 트레이 (입력바 위에서 슉 올라옴) */}
+      {showPlusTray && (
+        <div className="kakao-plus-tray">
+          <button
+            type="button"
+            className="kakao-tray-item"
+            onClick={() => { setShowPlusTray(false); fileInputRef.current?.click(); }}
+          >
+            <span className="kakao-tray-icon">📷</span>
+            <span className="kakao-tray-label">사진</span>
+          </button>
+          <button
+            type="button"
+            className="kakao-tray-item"
+            onClick={() => { setShowPlusTray(false); attachInputRef.current?.click(); }}
+          >
+            <span className="kakao-tray-icon">📎</span>
+            <span className="kakao-tray-label">파일</span>
+          </button>
+          <button
+            type="button"
+            className={`kakao-tray-item ${!isUnlocked('video_message', myProfile) ? 'locked-btn' : ''}`}
+            onClick={() => {
+              if (!checkUnlockOrAlert('video_message')) return;
+              setShowPlusTray(false); setShowVideoRecorder(true);
+            }}
+          >
+            <span className="kakao-tray-icon">{isUnlocked('video_message', myProfile) ? '🎥' : '🔒'}</span>
+            <span className="kakao-tray-label">비디오</span>
+          </button>
+          <button
+            type="button"
+            className={`kakao-tray-item ${!isUnlocked('voice_message', myProfile) ? 'locked-btn' : ''}`}
+            onClick={() => {
+              if (!checkUnlockOrAlert('voice_message')) return;
+              setShowPlusTray(false); setShowVoiceRecorder(true);
+            }}
+          >
+            <span className="kakao-tray-icon">{isUnlocked('voice_message', myProfile) ? '🎤' : '🔒'}</span>
+            <span className="kakao-tray-label">음성</span>
+          </button>
+          <button
+            type="button"
+            className={`kakao-tray-item ${!isUnlocked('sticker', myProfile) ? 'locked-btn' : ''}`}
+            onClick={() => {
+              if (!checkUnlockOrAlert('sticker')) return;
+              setShowPlusTray(false); setShowStickers(true); setShowEmoticons(false); setShowCommands(false);
+            }}
+          >
+            <span className="kakao-tray-icon">{isUnlocked('sticker', myProfile) ? '🎨' : '🔒'}</span>
+            <span className="kakao-tray-label">스티커</span>
+          </button>
+          <button
+            type="button"
+            className="kakao-tray-item"
+            onClick={() => {
+              setShowPlusTray(false); setShowCommands(true); setShowEmoticons(false); setShowStickers(false);
+            }}
+          >
+            <span className="kakao-tray-icon">🤖</span>
+            <span className="kakao-tray-label">봇 명령어</span>
+          </button>
+        </div>
+      )}
+
       <form className="message-input-area" onSubmit={handleSend}>
+        {/* 카톡식 + 버튼 (모든 부가 기능 통합) */}
+        <button
+          type="button"
+          className={`kakao-plus-btn ${showPlusTray ? 'active' : ''}`}
+          onClick={() => { setShowPlusTray(v => !v); setShowEmoticons(false); setShowStickers(false); setShowCommands(false); }}
+          title="첨부/도구"
+        >
+          {showPlusTray ? '✕' : '+'}
+        </button>
+        {/* 이모지는 카톡처럼 별도 — 입력칸 옆에 */}
         <button
           type="button"
           className={`emoji-toggle-btn ${showEmoticons ? 'active' : ''}`}
-          onClick={() => { setShowEmoticons(!showEmoticons); setShowStickers(false); setShowCommands(false); }}
+          onClick={() => { setShowEmoticons(!showEmoticons); setShowStickers(false); setShowCommands(false); setShowPlusTray(false); }}
           title="이모티콘"
         >
           😊
-        </button>
-        <button
-          type="button"
-          className={`emoji-toggle-btn ${showStickers ? 'active' : ''} ${!isUnlocked('sticker', myProfile) ? 'locked-btn' : ''}`}
-          onClick={() => {
-            if (!checkUnlockOrAlert('sticker')) return;
-            setShowStickers(!showStickers); setShowEmoticons(false); setShowCommands(false);
-          }}
-          title={isUnlocked('sticker', myProfile) ? '스티커' : '🔒 잠김'}
-        >
-          {isUnlocked('sticker', myProfile) ? '🎨' : '🔒'}
-        </button>
-        <button
-          type="button"
-          className={`emoji-toggle-btn ${showCommands ? 'active' : ''}`}
-          onClick={() => { setShowCommands(!showCommands); setShowEmoticons(false); setShowStickers(false); }}
-          title="봇 명령어"
-        >
-          🤖
-        </button>
-        <button
-          type="button"
-          className="image-btn"
-          onClick={() => fileInputRef.current?.click()}
-          title="사진 보내기"
-        >
-          📷
-        </button>
-        <button
-          type="button"
-          className="image-btn"
-          onClick={() => attachInputRef.current?.click()}
-          title="파일 첨부 (10MB 이하)"
-        >
-          📎
-        </button>
-        <button
-          type="button"
-          className={`image-btn ${!isUnlocked('video_message', myProfile) ? 'locked-btn' : ''}`}
-          onClick={() => {
-            if (!checkUnlockOrAlert('video_message')) return;
-            setShowVideoRecorder(true);
-          }}
-          title={isUnlocked('video_message', myProfile) ? '비디오 촬영/전송' : '🔒 Lv.3 필요'}
-        >
-          {isUnlocked('video_message', myProfile) ? '🎥' : '🔒'}
-        </button>
-        <button
-          type="button"
-          className={`image-btn ${!isUnlocked('voice_message', myProfile) ? 'locked-btn' : ''}`}
-          onClick={() => {
-            if (!checkUnlockOrAlert('voice_message')) return;
-            setShowVoiceRecorder(true);
-          }}
-          title={isUnlocked('voice_message', myProfile) ? '음성 메시지' : '🔒 베테랑 배지 필요'}
-        >
-          {isUnlocked('voice_message', myProfile) ? '🎤' : '🔒'}
         </button>
         <input
           ref={fileInputRef}

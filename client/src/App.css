@@ -4846,6 +4846,101 @@ body {
   .cb-end-turn { padding: 6px 12px; font-size: 12px; }
 }
 
+/* ===== 카톡식 + 버튼 + 트레이 (모든 첨부/도구 통합) ===== */
+.kakao-plus-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+  color: #888;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kakao-plus-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1a1a1a;
+}
+.kakao-plus-btn.active {
+  background: #1a1a1a;
+  color: #ffffff;
+  transform: rotate(45deg);
+}
+html[data-theme="kakao"] .kakao-plus-btn {
+  color: #555 !important;
+}
+html[data-theme="kakao"] .kakao-plus-btn.active {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+/* + 트레이 (입력바 위에 떠 있는 아이콘 그리드) */
+.kakao-plus-tray {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 14px 12px;
+  background: #f7f7f7;
+  border-top: 1px solid #eee;
+  animation: slideUpTray 0.2s ease-out;
+}
+@keyframes slideUpTray {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.kakao-tray-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 10px;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: background 0.15s ease;
+}
+.kakao-tray-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.kakao-tray-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.kakao-tray-label {
+  font-size: 11px;
+  color: #555;
+  font-weight: 500;
+}
+html[data-theme="kakao"] .kakao-plus-tray {
+  background: #f7f7f7 !important;
+  border-top: 1px solid #eee !important;
+}
+html[data-theme="kakao"] .kakao-tray-icon {
+  background: #ffffff !important;
+}
+
+/* 드로어 오버레이 완화 — 너무 어둡지 않게 */
+.drawer-overlay {
+  background: rgba(0, 0, 0, 0.15) !important;
+}
+
 /* ===== 카톡식 필터 칩 (전체 / 안읽음 / AI / 게임) ===== */
 .kakao-filter-tabs {
   display: none; /* 카톡 테마에서만 표시 */
