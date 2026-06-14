@@ -4846,6 +4846,58 @@ body {
   .cb-end-turn { padding: 6px 12px; font-size: 12px; }
 }
 
+/* ===== 카톡식 필터 칩 (전체 / 안읽음 / AI / 게임) ===== */
+.kakao-filter-tabs {
+  display: none; /* 카톡 테마에서만 표시 */
+  gap: 6px;
+  padding: 10px 12px 6px 12px;
+  overflow-x: auto;
+  background: #ffffff;
+  border-bottom: 1px solid #f5f5f5;
+}
+html[data-theme="kakao"] .kakao-filter-tabs {
+  display: flex !important;
+}
+.kakao-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #e8e8e8;
+  background: #ffffff;
+  color: #555;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.kakao-pill:hover {
+  background: #f5f5f5;
+}
+.kakao-pill.active {
+  background: #1a1a1a;
+  color: #ffffff;
+  border-color: #1a1a1a;
+  font-weight: 700;
+}
+.kakao-pill-badge {
+  background: #fee500;
+  color: #1a1a1a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+.kakao-pill.active .kakao-pill-badge {
+  background: #fee500;
+  color: #1a1a1a;
+}
+
 /* ===== 카톡 테마 최종 강제 오버라이드 (반드시 파일 끝 — 가장 마지막에 와야 다른 !important 이김) ===== */
 
 /* 모든 배너/카드: 흰 배경 + 검은 텍스트로 강제 통일 */

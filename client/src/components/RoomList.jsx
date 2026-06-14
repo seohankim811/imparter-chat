@@ -15,6 +15,8 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
   const [showCreate, setShowCreate] = useState(false);
   const [myProfile, setMyProfile] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  // 카톡식 필터 탭 ('all' | 'unread' | 'ai' | 'games')
+  const [filterTab, setFilterTab] = useState('all');
   const onJoinRoomRef = useRef(onJoinRoom);
 
   useEffect(() => { onJoinRoomRef.current = onJoinRoom; }, [onJoinRoom]);
@@ -145,7 +147,47 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
       </div>
 
       <div className="room-list-content">
+        {/* 카톡식 필터 탭 */}
+        <div className="kakao-filter-tabs">
+          <button
+            className={`kakao-pill ${filterTab === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterTab('all')}
+          >
+            전체
+          </button>
+          <button
+            className={`kakao-pill ${filterTab === 'unread' ? 'active' : ''}`}
+            onClick={() => setFilterTab('unread')}
+          >
+            안읽음
+            {(() => {
+              const cnt = rooms.filter(r => {
+                if (r.name.startsWith('__claude__') || r.name.startsWith('__persona__')) return false;
+                const lastSeenKey = `imparter-lastseen-${getMode()}-${r.name}`;
+                const lastSeen = parseInt(localStorage.getItem(lastSeenKey) || '0');
+                return r.lastMessageTime && r.lastMessageTime > lastSeen;
+              }).length;
+              return cnt > 0 ? <span className="kakao-pill-badge">{cnt}</span> : null;
+            })()}
+          </button>
+          <button
+            className={`kakao-pill ${filterTab === 'ai' ? 'active' : ''}`}
+            onClick={() => setFilterTab('ai')}
+          >
+            🤖 AI
+          </button>
+          {isKotlc && (
+            <button
+              className={`kakao-pill ${filterTab === 'games' ? 'active' : ''}`}
+              onClick={() => setFilterTab('games')}
+            >
+              🎮 게임
+            </button>
+          )}
+        </div>
+
         {/* 클로드 AI 채팅방 */}
+        {(filterTab === 'all' || filterTab === 'ai') && (
         <button
           className={`claude-banner ${!isUnlocked('ai_claude', myProfile) ? 'locked-btn' : ''}`}
           onClick={handleClaudeClick}
@@ -166,9 +208,10 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
             {isUnlocked('ai_claude', myProfile) ? 'ONLINE' : 'LOCKED'}
           </div>
         </button>
+        )}
 
         {/* KOTLC 캐릭터 1:1 채팅 (잃도수 모드만) */}
-        {isKotlc && (
+        {isKotlc && (filterTab === 'all' || filterTab === 'ai') && (
           <button
             className={`persona-banner ${!isUnlocked('ai_claude', myProfile) ? 'locked-btn' : ''}`}
             onClick={() => {
@@ -203,7 +246,7 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
         )}
 
         {/* 게임 배너 (잃도수 모드만) — 3개 가로 나란히 */}
-        {isKotlc && (
+        {isKotlc && (filterTab === 'all' || filterTab === 'games') && (
           <div className="game-banners-row game-banners-row-3">
             <button className="game-banner game-banner-third" onClick={() => onOpenGame('rts')}>
               <div className="game-banner-icon">⚔️</div>
@@ -256,11 +299,17 @@ export default function RoomList({ user, onJoinRoom, onLogout, onOpenGame, onOpe
           </div>
         )}
 
-        {(() => {
+        {(filterTab === 'ai' || filterTab === 'games') ? null : (() => {
           const q = searchQuery.trim().toLowerCase();
           const visible = rooms
-            .filter(r => !r.name.startsWith('__claude__'))
-            .filter(r => !q || r.name.toLowerCase().includes(q));
+            .filter(r => !r.name.startsWith('__claude__') && !r.name.startsWith('__persona__'))
+            .filter(r => !q || r.name.toLowerCase().includes(q))
+            .filter(r => {
+              if (filterTab !== 'unread') return true;
+              const lsk = `imparter-lastseen-${getMode()}-${r.name}`;
+              const ls = parseInt(localStorage.getItem(lsk) || '0');
+              return r.lastMessageTime && r.lastMessageTime > ls;
+            });
           if (rooms.length > 0 && visible.length === 0) {
             return (
               <div className="empty-rooms">
