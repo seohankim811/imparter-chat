@@ -1539,8 +1539,39 @@ body {
   z-index: 999 !important;
   animation: slideInRight 0.25s ease-out;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
-  overflow-y: auto !important;
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch;
+  /* 스크롤바 강제 표시 (Firefox) */
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.4) transparent !important;
+}
+/* 스크롤바 강제 표시 (Safari/Chrome) */
+.kakao-drawer::-webkit-scrollbar {
+  width: 8px !important;
+  background: transparent;
+  -webkit-appearance: none;
+}
+.kakao-drawer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+.kakao-drawer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  min-height: 40px;
+}
+.kakao-drawer::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+/* 카톡 테마에선 어두운 스크롤바 (흰 배경이라) */
+html[data-theme="kakao"] .kakao-drawer::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+}
+html[data-theme="kakao"] .kakao-drawer::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+html[data-theme="kakao"] .kakao-drawer {
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent !important;
 }
 @keyframes slideInRight {
   from { transform: translateX(100%); }
