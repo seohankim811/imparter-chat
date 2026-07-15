@@ -1529,15 +1529,18 @@ body {
 }
 .kakao-drawer {
   position: fixed !important;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 84%;
-  max-width: 340px;
-  z-index: 999;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 84% !important;
+  max-width: 340px !important;
+  max-height: 100vh !important;
+  height: 100vh !important;
+  z-index: 999 !important;
   animation: slideInRight 0.25s ease-out;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
-  overflow-y: auto;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 @keyframes slideInRight {
   from { transform: translateX(100%); }
